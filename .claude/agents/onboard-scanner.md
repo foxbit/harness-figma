@@ -75,11 +75,13 @@ substitui a outra.
   inventário inteiro — registrar que aquele component set específico não
   pôde ser lido por essa via, e usar `scan_nodes_by_types` (tipo
   `COMPONENT`/`COMPONENT_SET`) como catalogação alternativa parcial
-- **Auto Layout**: `get_node`/`get_nodes_info` não expõem `layoutMode`/
-  padding/`itemSpacing` — não verificável de forma determinística via
-  este MCP, nem por screenshot (aparência visual de espaçamento não é
-  confirmação de Auto Layout real). Registrar sempre como "não
-  verificável via MCP", nunca afirmar presença/ausência por inferência
+- **Auto Layout**: `get_node`/`get_nodes_info` expõem `padding` por nó,
+  mas não `layoutMode`/`itemSpacing`/sizing mode — esses três não são
+  verificáveis de forma determinística via este MCP, nem por screenshot
+  (aparência visual de espaçamento não é confirmação de Auto Layout
+  real). Registrar `padding` quando presente no JSON; registrar
+  `layoutMode`/`itemSpacing`/sizing sempre como "não verificável via
+  MCP", nunca afirmar presença/ausência por inferência
 
 ## Registro no inventário
 - Para cada componente/candidato investigado: nome exato como está no

@@ -44,6 +44,40 @@ delegar e quando pedir aprovação humana.
 
 ---
 
+## Economia de tokens — disciplina obrigatória
+
+Cada subagente roda em contexto isolado e frio — não há cache de prompt
+compartilhado entre chamadas a agentes diferentes, e mesmo chamadas
+repetidas ao mesmo agente só se beneficiam de cache dentro da janela de
+poucos minutos. Na prática, isso significa que o controle real de custo
+não vem de configuração de infraestrutura (isso já é gerenciado pela
+plataforma) — vem de disciplina de conteúdo, em dois pontos:
+
+### Saída concisa (todos os agentes)
+Tokens de saída custam mais que os de entrada. O relatório final de
+qualquer agente deve:
+- Reportar achados de forma direta — sem restatar o input recebido, sem
+  introdução/conclusão decorativa
+- Preferir listas compactas a prosa longa quando a informação é
+  estruturada por natureza (IDs, valores, status)
+- Citar só os campos relevantes de um retorno bruto de tool (ex: o hex
+  de um fill), nunca colar de volta o JSON inteiro de uma resposta MCP
+  no texto do relatório
+- Isso não é licença para omitir raciocínio genuinamente necessário
+  (ex: por que um candidato foi descartado) — conciso é sobre eliminar
+  repetição e enfeite, não sobre cortar substância
+
+### Pre-flight barato antes de agente caro (responsabilidade da sessão principal)
+Antes de invocar um subagente para uma tarefa que pode ser um beco sem
+saída óbvio, fazer uma checagem rápida e barata primeiro (`get_metadata`,
+`get_pages`, ou um `get_node` pontual), em vez de descobrir o problema só
+depois de um subagente inteiro já ter rodado. Exemplos já aplicados
+nesta base: confirmar que o arquivo certo está aberto antes de rodar uma
+varredura completa; confirmar que um node/página existe antes de propor
+um plano de reconstrução em cima dele.
+
+---
+
 ## Dois arquivos Figma por projeto — legado e produção
 
 Cada projeto tem dois arquivos Figma distintos, declarados em
@@ -337,19 +371,25 @@ estas duas limitações primeiro — podem deixar de existir.
    única tela de login real. Fallback: em vez de puxar a árvore inteira,
    combinar `scan_nodes_by_types` (por tipo, ex: `FRAME`/`TEXT`) +
    `get_nodes_info` pontual num subconjunto de IDs + `scan_text_nodes`.
-6. **`get_node`/`get_nodes_info` não expõem propriedades de Auto
-   Layout.** O schema retornado por estas tools é limitado a `id`,
-   `name`, `type`, `bounds`, `children` e `styles` (e `styles`, por sua
-   vez, só traz `cornerRadius`/`fills`/`strokes`) — sem `layoutMode`,
-   padding, `itemSpacing` ou sizing modes. Confirmado diretamente
-   (inspecionando o JSON bruto retornado), não é limitação hipotética.
+6. **`get_node`/`get_nodes_info` expõem `padding` por nó, mas não
+   `layoutMode`/`itemSpacing`/sizing mode.** Revisão de um teste
+   anterior que registrava ausência total de propriedades de Auto
+   Layout — reconfirmado em teste real (tela "home" de biblioteca
+   digital) que o JSON bruto retornado TRAZ `padding` (ex:
+   top/right/bottom/left por nó) quando o nó tem Auto Layout. O que
+   continua ausente, confirmado no mesmo teste: `layoutMode` (não dá
+   para saber se é horizontal/vertical/nenhum), `itemSpacing` e os
+   sizing modes (hug/fixed/fill). Além disso, `styles` por nó também
+   traz `fillStyle`/`strokeStyle`/`textStyle` (nome do style vinculado,
+   quando existe) — o que permite checar hardcoded-vs-nomeado direto no
+   `get_node`, sem precisar de `get_styles` à parte.
    **Consequência real**: a checagem "Ausência de Auto Layout" do
    `COMPONENT_STANDARDS.md`, usada pelo `auditor` e pelo
-   `onboard-scanner`, não pode ser verificada de forma determinística
-   via este MCP. Na prática, esses agentes devem reportar essa
-   dimensão como "não verificável via MCP" em vez de afirmar
-   presença/ausência — nunca inferir com falsa confiança a partir de
-   evidência indireta (ex: espaçamento visual em `get_screenshot`).
+   `onboard-scanner`, pode confirmar `padding` via `get_node`, mas
+   `layoutMode`/`itemSpacing`/sizing continuam "não verificável via
+   MCP" — não afirmar presença/ausência desses três por inferência
+   (ex: espaçamento visual em `get_screenshot`), só o `padding` tem
+   confirmação direta.
 
 7. **IDs de variável/coleção usam formato prefixado, diferente de IDs
    de node.** `get_variable_defs`/`create_variable_collection`/
