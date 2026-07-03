@@ -13,6 +13,11 @@ os file-keys aqui antes de qualquer operação.
 escreve aqui, nunca. Usado como referência visual pelo onboarding e
 pelo preflight. -->
 - File-key: `[PREENCHER]`
+- Nome do arquivo (exatamente como aparece no Figma — `fileName`): `[PREENCHER]`
+  <!-- Campo crítico: o MCP conectado (figma-mcp-go) não expõe file-key,
+  só este nome de exibição. É contra ele que todo agente confirma "arquivo
+  certo aberto" antes de ler/escrever — ver CLAUDE.md, seção "Regra de
+  segurança". Mantenha exato, incluindo maiúsculas/espaços. -->
 - Team / Projeto no Figma: `[PREENCHER]`
 - Link direto: `[PREENCHER]`
 
@@ -21,6 +26,7 @@ pelo preflight. -->
 Único destino de escrita do builder e do preflight-builder. Fica vazio
 até a primeira execução do preflight para este cliente. -->
 - File-key: `[PREENCHER — vazio até o preflight criar o arquivo]`
+- Nome do arquivo (exatamente como aparece no Figma — `fileName`): `[PREENCHER — vazio até o preflight criar o arquivo]`
 - Team / Projeto no Figma: `[PREENCHER]`
 - Link direto: `[PREENCHER]`
 

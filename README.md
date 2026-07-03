@@ -58,50 +58,57 @@ novo.
 cp .env.example .env
 ```
 
-Preencha `.env` — ver comentários no próprio arquivo. Há duas URLs
-distintas de MCP: uma para leitura (Remote SSE) e outra para escrita.
+`figma-mcp-go` (ver passo 2) não exige token de API — usa só o plugin
+bridge dentro do Figma Desktop. O `.env.example` fica de referência
+para credenciais que outras integrações do projeto venham a precisar.
 **Nunca** commite `.env`.
 
-### 2. Conectar o MCP do Figma — `figma-console-mcp`
+### 2. Conectar o MCP do Figma — `figma-mcp-go`
 
-Este harness usa https://github.com/southleft/figma-console-mcp em vez
-do MCP oficial do Figma, por compatibilidade com Linux. Confirme
-sempre a documentação atual do projeto antes de seguir, pois esse tipo
-de setup muda com frequência.
+Este harness usa https://github.com/vkhanhqui/figma-mcp-go — testado e
+funcionando neste projeto (Node v20, Linux). Diferente de uma conexão
+por token de API, este servidor só enxerga o Figma através de um
+plugin rodando dentro do Figma Desktop, aberto no arquivo-alvo. Isso
+significa que **leitura e escrita exigem Figma Desktop igualmente** —
+não há um modo remoto/read-only que dispense o app, ao contrário do
+que se imaginava antes de testar na prática.
 
-**Importante entender antes de configurar**: esse MCP tem modos com
-capacidades bem diferentes.
-
-| Modo | O que exige | Cobre quais agentes |
-|---|---|---|
-| **Remote SSE** | Só o token, via OAuth — nenhum app instalado, funciona 100% no Linux | `interpreter`, `auditor`, `validator`, `onboard-scanner`, `onboard-analyst` (todos read-only) |
-| **Local NPX / Cloud Mode** | Node.js + **Figma Desktop app rodando com o plugin "Desktop Bridge"** | `builder`, `preflight-builder` (escrita) |
-
-**A limitação real**: Figma Desktop não tem build oficial para Linux —
-nem este MCP nem o oficial do Figma escapam dessa exigência para
-escrita. Três caminhos possíveis, escolha um quando for de fato usar
-`builder`/`preflight-builder` (não é bloqueante para o resto):
-
-- **VM Windows leve** rodando Figma Desktop + plugin, usando **Cloud
-  Mode** para o Claude Code (no seu Linux) se conectar ao relay —
-  não precisa que a VM e o Claude Code estejam na mesma máquina
-- **Wine/CrossOver** rodando o Figma Desktop direto no Linux — não
-  suportado oficialmente pelo Figma, risco de instabilidade
-- **Máquina física ocasional** (Mac/Windows que você tenha acesso de
-  vez em quando) só para as sessões em que for rodar `builder`/
-  `preflight-builder`
-
-Passos gerais de conexão (confirme na doc atual do projeto):
 ```bash
-claude mcp add --transport sse figma-read [URL_REMOTE_SSE]
-# Quando for configurar escrita, adicionar a conexão correspondente
-# ao modo escolhido (Local NPX ou Cloud Mode)
+claude mcp add -s project figma-mcp-go -- npx -y @vkhanhqui/figma-mcp-go@latest
 ```
 
-**[PREENCHER]** — depois de conectado, rode uma consulta simples para
-listar as tools expostas de fato, e substitua os placeholders
-`mcp__figma__*` / `figma_*` usados em `.claude/agents/*.md` pelos nomes
-reais.
+Isso grava a configuração em `.mcp.json` (raiz do projeto, versionado).
+Na primeira vez que o Claude Code for usado neste diretório depois
+disso, ele vai pedir aprovação do servidor — rode `claude` numa sessão
+interativa e aprove. Depois, `claude mcp list` deve mostrar
+`figma-mcp-go ... ✔ Connected`.
+
+**Plugin no Figma Desktop (obrigatório para qualquer operação, não só escrita):**
+1. Baixe `plugin.zip` da [release mais recente](https://github.com/vkhanhqui/figma-mcp-go/releases)
+2. Extraia — o `manifest.json` fica na raiz do zip extraído
+3. No Figma Desktop: **Plugins → Development → Import plugin from manifest** → aponte para esse `manifest.json`
+4. Abra o arquivo Figma que quiser usar e rode o plugin manualmente (**Plugins → Development → figma-mcp-go**) — plugins de desenvolvimento não iniciam sozinhos, é preciso rodar a cada sessão de trabalho
+5. Figma Desktop não tem build oficial para Linux — escolha um caminho: VM Windows leve, Wine/CrossOver (não suportado oficialmente, risco de instabilidade), ou máquina física ocasional (Mac/Windows)
+
+**Troubleshooting conhecido — "Can't call X in read-only mode":**
+Isso não é falta de permissão de conta nem problema do plugin — é o
+Figma em **Dev Mode** (ícone `</>` no canto superior direito da aba,
+atalho `Shift+D`). Em Dev Mode a própria Plugin API do Figma bloqueia
+escrita, para qualquer plugin. Alterne para "Design mode" e tente de
+novo.
+
+**Duas limitações reais deste servidor**, já refletidas em
+`CLAUDE.md` e nos agentes: não existe tool para criar a primeira
+instância de um componente (só clonar uma instância já existente), e
+não existe tool para combinar componentes em variantes — ambas exigem
+um passo manual no Figma quando ocorrem. Não existe também exposição
+de `file-key`: a checagem de "arquivo correto" usa `fileName` (nome de
+exibição), então declare o nome exato de cada arquivo (Legado e
+Produção) no `PROJECT.md` de cada cliente.
+
+As 73 tools reais já estão nomeadas corretamente em
+`.claude/agents/*.md` (prefixo `mcp__figma-mcp-go__*`) — não há mais
+placeholder pendente de preenchimento nesta conexão.
 
 ### 3. Criar um novo projeto/cliente
 

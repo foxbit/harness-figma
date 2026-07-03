@@ -1,0 +1,5 @@
+# Credenciais — nunca commitar (ver CLAUDE.md e README.md)
+.env
+
+# Permissões locais de sessão do Claude Code — específicas de máquina
+.claude/settings.local.json

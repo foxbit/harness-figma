@@ -58,15 +58,29 @@ Cada projeto tem dois arquivos Figma distintos, declarados em
 
 ## Regra de segurança — escopo por projeto
 
-Antes de qualquer operação de escrita no Figma, confirmar que o
-`file-key` do node de destino corresponde ao `file-key de produção`
-declarado no `PROJECT.md` do projeto atualmente carregado. Se não
-corresponder — incluindo se o destino for o file-key do legado — PARAR
-e alertar. Nunca escrever no arquivo legado, em nenhuma circunstância.
+Antes de qualquer operação de escrita no Figma, confirmar que o arquivo
+de destino corresponde ao arquivo de **Produção** declarado no
+`PROJECT.md` do projeto atualmente carregado. Se não corresponder —
+incluindo se o destino for o arquivo do legado — PARAR e alertar. Nunca
+escrever no arquivo legado, em nenhuma circunstância.
 
 A conta Figma é corporativa única (múltiplos clientes dentro dela). O
 isolamento entre clientes é feito por esta verificação de configuração,
 não por token separado.
+
+**Limitação do MCP conectado (`figma-mcp-go`)**: este servidor opera
+sobre o arquivo que estiver ativo no Figma Desktop (o plugin roda dentro
+de um arquivo por vez) e nunca expõe `file-key` — só `fileName`, o nome
+de exibição do arquivo, editável por qualquer pessoa e portanto não é
+um identificador criptograficamente confiável. Isso muda a natureza
+desta regra de segurança: a verificação por agente (`get_metadata` →
+comparar `fileName` contra o nome declarado em `PROJECT.md`) é uma
+camada adicional de checagem, mas a garantia real de "arquivo de
+Produção certo está aberto" depende do humano ter aberto esse arquivo
+no Figma Desktop antes de invocar `builder`/`preflight-builder`/
+`documenter`. Cada `PROJECT.md` deve declarar o `fileName` exato de
+Legado e de Produção (não só o file-key/link) para essa checagem ser
+possível.
 
 ---
 
@@ -254,22 +268,104 @@ documentados (não apagar) para não quebrar referências em telas antigas.
 
 ## Conexão MCP com o Figma (ambiente Linux)
 
-Este harness usa o servidor MCP `figma-console-mcp`
-(https://github.com/southleft/figma-console-mcp), não o MCP oficial do
-Figma, por compatibilidade com Linux. Detalhes de setup: ver
-`README.md`.
+Este harness usa o servidor MCP `figma-mcp-go`
+(https://github.com/vkhanhqui/figma-mcp-go), registrado em `.mcp.json`
+na raiz do projeto (escopo de projeto, `claude mcp add -s project
+figma-mcp-go -- npx -y @vkhanhqui/figma-mcp-go@latest`). Detalhes de
+setup: ver `README.md`.
 
-Ponto crítico de arquitetura: escrita no Figma (usada por `builder` e
-`preflight-builder`) depende do plugin "Desktop Bridge" rodando dentro
-do Figma Desktop app, que não tem build oficial para Linux. Agentes
-somente-leitura (`interpreter`, `auditor`, `validator`,
-`onboard-scanner`, `onboard-analyst`) funcionam via modo Remote SSE,
-sem essa dependência. Ver `README.md` para as opções de contorno
-(VM Windows, Wine, máquina física ocasional).
+Ponto crítico de arquitetura: TODA operação neste servidor — leitura e
+escrita — depende do plugin "figma-mcp-go" rodando dentro do Figma
+Desktop app aberto no arquivo-alvo, que não tem build oficial para
+Linux (VM Windows, Wine, ou máquina física ocasional — ver `README.md`
+para as opções de contorno). Diferente de uma conexão baseada em token
+de API, não existe modo remoto/read-only que dispense o Desktop: todos
+os 10 agentes, incluindo os somente-leitura (`interpreter`, `auditor`,
+`validator`, `onboard-scanner`, `preflight-planner`), precisam do
+plugin ativo no arquivo correto para funcionar.
 
-`[PREENCHER]` — nomes reais das tools MCP expostas pela conexão real
-devem substituir os placeholders `figma_*` usados nos arquivos
-`.claude/agents/*.md`.
+**Dev Mode bloqueia toda escrita.** Se qualquer tool de escrita
+retornar erro do tipo "Can't call X in read-only mode", a causa mais
+provável é a aba do Figma estar em Dev Mode (ícone `</>` no canto
+superior direito, atalho `Shift+D`) — é um estado de exibição do
+próprio Figma, independente da permissão de edição da conta, e a
+Plugin API do Figma bloqueia chamadas de escrita nesse estado. Alternar
+para Design mode resolve.
+
+### Limitações conhecidas do MCP conectado (`figma-mcp-go`)
+
+Duas lacunas de capacidade que afetam diretamente a execução do plano
+do `interpreter`/`preflight-planner` — não são bugs do harness, são
+ausência de funcionalidade no servidor conectado hoje:
+
+1. **Sem tool de "criar instância" de componente.** Só existem
+   `clone_node` (duplica qualquer node — preserva o vínculo com o
+   componente principal apenas se o node clonado já for uma `INSTANCE`)
+   e `swap_component` (troca o componente-mãe de uma instância já
+   existente). REUSO DIRETO só é executável se já existir pelo menos
+   uma instância do componente-alvo em algum lugar do arquivo para
+   clonar. Se for o primeiro uso real de um componente, `builder`/
+   `preflight-builder` param e reportam — não há como criar a primeira
+   instância via este MCP.
+2. **Sem tool de combinar componentes em variantes**
+   (`combineAsVariants` do Figma). A categoria `NOVA VARIANTE`
+   continua válida na classificação do `interpreter`, mas a execução
+   exige um passo manual do humano diretamente no Figma — `builder`/
+   `preflight-builder` constroem a variante como componente avulso e
+   param antes da combinação.
+
+Se um MCP diferente vier a substituir `figma-mcp-go` no futuro, revisar
+estas duas limitações primeiro — podem deixar de existir.
+
+### Erros conhecidos do MCP conectado (confirmados em teste real, não hipotéticos)
+
+3. **Não é possível apagar/remover a página atualmente ativa no Figma.**
+   `delete_page` (e operações de remoção em geral) falham com `"in
+   remove: Removing this node is not allowed"` se o alvo for a página
+   que está sendo exibida no momento no Figma Desktop. Sempre
+   `navigate_to_page` para OUTRA página antes de apagar a página-alvo.
+   Isso afeta diretamente o `documenter` ao promover uma tela para
+   "Telas Atuais" (que envolve apagar a versão anterior) — navegar para
+   fora da página em questão antes de tentar remover algo nela.
+4. **`scan_nodes_by_types` pode estourar limite de tokens em páginas
+   grandes** (páginas com muitos elementos retornam payload grande
+   demais). Nesses casos, usar `search_nodes` com um `limit` baixo como
+   alternativa funcional — foi o fallback usado com sucesso em teste
+   real nesta mesma situação.
+5. **`get_document` (árvore completa de uma página) estoura limite de
+   tokens em telas densas** — confirmado com 312.628 caracteres numa
+   única tela de login real. Fallback: em vez de puxar a árvore inteira,
+   combinar `scan_nodes_by_types` (por tipo, ex: `FRAME`/`TEXT`) +
+   `get_nodes_info` pontual num subconjunto de IDs + `scan_text_nodes`.
+6. **`get_node`/`get_nodes_info` não expõem propriedades de Auto
+   Layout.** O schema retornado por estas tools é limitado a `id`,
+   `name`, `type`, `bounds`, `children` e `styles` (e `styles`, por sua
+   vez, só traz `cornerRadius`/`fills`/`strokes`) — sem `layoutMode`,
+   padding, `itemSpacing` ou sizing modes. Confirmado diretamente
+   (inspecionando o JSON bruto retornado), não é limitação hipotética.
+   **Consequência real**: a checagem "Ausência de Auto Layout" do
+   `COMPONENT_STANDARDS.md`, usada pelo `auditor` e pelo
+   `onboard-scanner`, não pode ser verificada de forma determinística
+   via este MCP. Na prática, esses agentes devem reportar essa
+   dimensão como "não verificável via MCP" em vez de afirmar
+   presença/ausência — nunca inferir com falsa confiança a partir de
+   evidência indireta (ex: espaçamento visual em `get_screenshot`).
+
+7. **IDs de variável/coleção usam formato prefixado, diferente de IDs
+   de node.** `get_variable_defs`/`create_variable_collection`/
+   `create_variable` retornam (e exigem de volta em `delete_variable`/
+   `bind_variable_to_node`) IDs no formato `VariableCollectionId:11:23697`
+   ou `VariableID:74:2135` — com o prefixo por extenso, ao contrário dos
+   IDs de node (`4003:33149`, sem prefixo). Passar só a parte numérica
+   para `delete_variable`/`bind_variable_to_node` falha com "Collection
+   not found"/erro equivalente. Sempre usar o ID exatamente como
+   retornado pela tool que o criou, nunca truncar o prefixo.
+
+Todos os pontos acima já foram encontrados e contornados em testes
+reais do `builder`, `onboard-scanner` e `preflight-builder` (smoke
+tests com criação de componente, clonagem de instância, varredura de
+um arquivo legado real, e criação/vínculo de variável) — não são
+hipóteses, são comportamento confirmado.
 
 ---
 
