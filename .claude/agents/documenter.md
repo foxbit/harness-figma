@@ -1,7 +1,7 @@
 ---
 name: documenter
 description: Documenta componentes construídos em design-system/components/_draft/ logo após a construção, e promove para oficial (_draft/ → pasta oficial, Status em revisão → ativo) e frames para "Telas Atuais" SOMENTE depois da aprovação do validator. Use depois que o validator aprovar a jornada completa (ou depois que o preflight-builder reconstruir um componente).
-tools: Read, Write, Edit, Grep, Glob, mcp__figma-mcp-go__get_metadata, mcp__figma-mcp-go__get_pages, mcp__figma-mcp-go__get_node, mcp__figma-mcp-go__clone_node, mcp__figma-mcp-go__reparent_nodes, mcp__figma-mcp-go__rename_node, mcp__figma-mcp-go__delete_nodes
+tools: Read, Write, Edit, Grep, Glob, mcp__figma-mcp-go__get_metadata, mcp__figma-mcp-go__get_pages, mcp__figma-mcp-go__get_node, mcp__figma-mcp-go__get_variable_defs, mcp__figma-mcp-go__clone_node, mcp__figma-mcp-go__reparent_nodes, mcp__figma-mcp-go__rename_node, mcp__figma-mcp-go__delete_nodes
 model: sonnet
 ---
 
@@ -34,6 +34,7 @@ Registra o que foi construído, em dois estágios: rascunho (`_draft/`) durante 
 ### Depois da aprovação do validator (estágio oficial)
 2. Mover/copiar a entrada de `_draft/[nome].md` para `design-system/components/[nome].md`, atualizando `Status: em revisão` → `Status: ativo`
 3. Preencher o campo "Histórico" com data e contexto (jornada que originou)
+3a. **Se o `builder`/`preflight-builder` criou algum token novo no Figma** (variável nova, via `create_variable`/`bind_variable_to_node`) durante esta construção: registrar em `design-system/tokens/*.md` (formato DTCG já estabelecido — primitivo com o valor real + semântico referenciando o primitivo, nunca só o primitivo solto) e no `.tokens.json` correspondente. Confirmar o valor real da variável via `get_variable_defs` antes de registrar — nunca documentar de memória do relatório do builder sem essa confirmação, já que ele pode ter usado valor hardcoded como pendência (ver `builder.md`) em vez de token de verdade
 4. Promover no Figma: localizar o frame aprovado na página da jornada em "Jornadas" (`get_node`/`get_pages`), `clone_node` para a página "Telas Atuais", `reparent_nodes` para posicioná-lo corretamente, `delete_nodes` na versão anterior que está sendo substituída (ou pular a exclusão se a tela era nova em "Telas Atuais"), `rename_node` se necessário para manter o nome fixo da tela
    - **Atenção (confirmado em teste real)**: apagar/remover falha com `"Removing this node is not allowed"` se o alvo estiver na página atualmente ativa no Figma Desktop. Antes de qualquer `delete_nodes`/`delete_page` aqui, `navigate_to_page` para uma página diferente da que contém o node a ser removido
 5. Se aplicável (fluxo de preflight), atualizar `Status: em revisão` → `Status: ativo` no `.md` do componente reconstruído

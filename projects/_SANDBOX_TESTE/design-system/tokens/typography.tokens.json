@@ -1,0 +1,4 @@
+{
+  "$description": "Par machine-readable de typography.md — formato DTCG. Projeto _SANDBOX_TESTE. Nenhum text style catalogado no Legado (get_styles retornou lista vazia) — sem primitivos nem semânticos a registrar ainda. Ver typography.md para os valores hardcoded de referência (não são tokens).",
+  "typography": {}
+}

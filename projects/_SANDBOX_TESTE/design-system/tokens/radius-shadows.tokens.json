@@ -1,0 +1,5 @@
+{
+  "$description": "Par machine-readable de radius-shadows.md — formato DTCG. Projeto _SANDBOX_TESTE. Nenhum effect/grid style catalogado no Legado — sem primitivos nem semânticos a registrar ainda. Ver radius-shadows.md para os valores hardcoded de referência (não são tokens).",
+  "radius": {},
+  "shadow": {}
+}

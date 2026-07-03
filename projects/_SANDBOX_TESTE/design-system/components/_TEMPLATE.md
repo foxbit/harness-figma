@@ -51,10 +51,16 @@ explicitamente. -->
 | [PREENCHER] | texto/imagem/booleano/etc | sim/não | [PREENCHER] |
 
 ## Tokens utilizados
-<!-- Nomes dos tokens, nunca valores hex/px soltos -->
-- Cor: `[PREENCHER — nome do token]`
-- Espaçamento: `[PREENCHER — nome do token]`
-- Tipografia: `[PREENCHER — nome do token]`
+<!-- Nomes SEMÂNTICOS de tokens (formato DTCG, ver design-system/tokens/),
+nunca valores hex/px soltos e nunca o nome do primitivo bruto — ex:
+"color.primary", não "#1A1C1E" nem "color.primitive.blue-500". Se algum
+valor deste componente ainda não tem token semântico correspondente,
+registrar isso explicitamente como pendência (não inventar um token só
+para preencher o campo). -->
+- Cor: `[PREENCHER — ex: color.surface]`
+- Espaçamento: `[PREENCHER — ex: spacing.lg]`
+- Raio: `[PREENCHER — ex: radius.md]`
+- Tipografia: `[PREENCHER — ex: typography.body-md]`
 
 ## Quando usar
 [PREENCHER — critério objetivo de aplicabilidade]

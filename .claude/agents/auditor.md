@@ -19,6 +19,7 @@ Responde "está bem construído?" — consistência técnica contra `COMPONENT_S
 
 ## Input esperado
 - `design-system/components/*.md` (oficial — ignorar `_draft/`, ainda não promovidos)
+- `design-system/tokens/*.md` + `*.tokens.json` (formato DTCG — primitivos e semânticos)
 - `design-system/COMPONENT_STANDARDS.md`
 - Arquivo de Produção real, via MCP — confirmar `fileName` (via `get_metadata`) contra o nome declarado no `PROJECT.md` antes de reportar qualquer achado, já que este MCP não expõe file-key (ver `CLAUDE.md`, seção "Regra de segurança")
 
@@ -31,9 +32,11 @@ Responde "está bem construído?" — consistência técnica contra `COMPONENT_S
    - Possíveis duplicatas (mesma função, nomes diferentes)
 4. Checar consistência técnica de cada componente oficial contra `COMPONENT_STANDARDS.md`, usando `get_node`/`get_nodes_info`/`get_styles`/`get_variable_defs`:
    - Valores hardcoded (cor, espaçamento, tipografia, raio) em vez de tokens/variáveis vinculadas
+   - Vínculo a um token **primitivo** em vez do **semântico** correspondente (ex: `color.primitive.blue-500` usado direto num componente, em vez de `color.primary`) — contra `COMPONENT_STANDARDS.md`, isso é tão inválido quanto hardcoded
    - Nomenclatura fora do padrão (`Categoria/Nome — Variante`, sem sufixos ambíguos)
    - Ausência de Auto Layout — **limitação confirmada**: `get_node`/`get_nodes_info` não expõem `layoutMode`/padding/`itemSpacing` (schema limitado a `id`/`name`/`type`/`bounds`/`children`/`styles`). Não é possível verificar esta dimensão de forma determinística via este MCP — reportar como "não verificável via MCP", nunca inferir presença/ausência a partir de evidência indireta (ex: espaçamento visual em screenshot)
    - Componentes aninhados como cópia solta em vez de instância vinculada (checar `type: INSTANCE` vs. cópias com estrutura idêntica mas sem vínculo)
+5. Checar **drift de token**: comparar o valor real de cada variável do Figma (`get_variable_defs`) contra o `$value` documentado em `design-system/tokens/*.tokens.json` — se alguém mudou o valor de uma variável direto no Figma sem passar pelo harness, o `.md`/`.json` fica desatualizado silenciosamente. Reportar qualquer divergência de valor entre token documentado e variável real
 
 ## Output esperado
 Relatório em texto, organizado por tipo de achado, sem nenhuma correção aplicada.

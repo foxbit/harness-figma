@@ -360,6 +360,12 @@ estas duas limitações primeiro — podem deixar de existir.
    para `delete_variable`/`bind_variable_to_node` falha com "Collection
    not found"/erro equivalente. Sempre usar o ID exatamente como
    retornado pela tool que o criou, nunca truncar o prefixo.
+8. **`create_component` pode resetar o sizing mode do Auto Layout para
+   "hug" ao converter um frame de tamanho fixo.** Observado em teste
+   real: um frame 200×90 com sizing `FIXED` voltou a 159×90 (hug) logo
+   após `create_component`. Corrigir com `resize_nodes` de volta ao
+   tamanho pretendido, e conferir com `get_node` depois da conversão —
+   não assumir que o tamanho do frame original se manteve.
 
 Todos os pontos acima já foram encontrados e contornados em testes
 reais do `builder`, `onboard-scanner` e `preflight-builder` (smoke

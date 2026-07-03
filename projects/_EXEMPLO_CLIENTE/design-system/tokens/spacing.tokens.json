@@ -1,0 +1,37 @@
+{
+  "$description": "[PREENCHER] Par machine-readable de spacing.md — formato DTCG. Gerado a partir de spacing.md, nunca editado direto sem espelhar lá também.",
+  "spacing": {
+    "primitive": {
+      "PREENCHER": {
+        "$type": "dimension",
+        "$value": "0px",
+        "$description": "[PREENCHER] degrau real da escala bruta encontrada no legado"
+      }
+    },
+    "xs": {
+      "$type": "dimension",
+      "$value": "{spacing.primitive.PREENCHER}",
+      "$description": "Micro-espaçamentos, margem interna de ícone"
+    },
+    "sm": {
+      "$type": "dimension",
+      "$value": "{spacing.primitive.PREENCHER}",
+      "$description": "Espaçamento entre elementos relacionados (label + input)"
+    },
+    "md": {
+      "$type": "dimension",
+      "$value": "{spacing.primitive.PREENCHER}",
+      "$description": "Espaçamento padrão entre componentes de um grupo"
+    },
+    "lg": {
+      "$type": "dimension",
+      "$value": "{spacing.primitive.PREENCHER}",
+      "$description": "Padding interno de cards/containers principais"
+    },
+    "xl": {
+      "$type": "dimension",
+      "$value": "{spacing.primitive.PREENCHER}",
+      "$description": "Margens grandes, espaçamento entre seções"
+    }
+  }
+}

@@ -7,7 +7,10 @@ completo.
 
 ## Resumo do procedimento
 1. `onboard-scanner` varre o arquivo Legado inteiro, produz inventário
-   bruto sem julgamento
+   bruto sem julgamento — em duas passadas (visual/screenshot primeiro
+   para pesquisa barata, consulta estrutural pontual depois só nos
+   candidatos sinalizados; nunca dump de árvore/catálogo inteiro de uma
+   vez, ver `onboard-scanner.md`)
 2. `onboard-analyst` cruza o inventário, identifica suspeitas de
    duplicata/inconsistência, formula perguntas objetivas
 3. Negociação com o humano, uma pergunta por vez, respostas registradas

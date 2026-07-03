@@ -1,0 +1,87 @@
+{
+  "$description": "Par machine-readable de colors.md — formato DTCG. Projeto _SANDBOX_TESTE (teste de fumaça, não cliente real). Camada semântica pendente (ver colors.md) — só primitivos catalogados pelo onboard-writer.",
+  "color": {
+    "primitive": {
+      "gradiente-verde-claro": {
+        "$type": "color",
+        "$value": "#FFFFFF",
+        "$description": "Stop inicial do gradiente 'Verde Claro' (Figma) — vai até #57AC13. Fundo decorativo de tela"
+      },
+      "gradiente-verde": {
+        "$type": "color",
+        "$value": "#629737",
+        "$description": "Stop inicial do gradiente 'Gradiente/Verde' (Figma) — vai até #356A0A"
+      },
+      "gradiente-azul": {
+        "$type": "color",
+        "$value": "#363F72",
+        "$description": "Stop inicial do gradiente 'Gradiente/Azul' (Figma) — vai até #16299C"
+      },
+      "card-bg-vermelho": {
+        "$type": "color",
+        "$value": "#FFC0BC",
+        "$description": "Stop inicial do gradiente 'Card Background/Vermelho' (Figma) — vai até #FFFFFF"
+      },
+      "card-bg-laranja": {
+        "$type": "color",
+        "$value": "#FFC493",
+        "$description": "Stop inicial do gradiente 'Card Background/Laranja' (Figma) — vai até #FFFFFF"
+      },
+      "card-bg-verde": {
+        "$type": "color",
+        "$value": "#CFFFD2",
+        "$description": "Stop inicial do gradiente 'Card Background/Verde' (Figma) — vai até #FFFFFF"
+      },
+      "card-bg-cinza": {
+        "$type": "color",
+        "$value": "#E6E6E6",
+        "$description": "Stop inicial do gradiente 'Card Background/Cinza' (Figma) — vai até #FFFFFF"
+      },
+      "verde-claro-50": {
+        "$type": "color",
+        "$value": "#D0F8AB",
+        "$description": "Alpha 0.5 — 'Estilos de formatação/Verde Claro 50' no Figma"
+      },
+      "verde-claro-100": {
+        "$type": "color",
+        "$value": "#D0F8AB",
+        "$description": "'Estilos de formatação/Verde Claro 100' no Figma"
+      },
+      "azul-claro-50": {
+        "$type": "color",
+        "$value": "#D1E9FF",
+        "$description": "Alpha 0.5 — 'Estilos de formatação/Azul Claro 50' no Figma"
+      },
+      "azul-claro-100": {
+        "$type": "color",
+        "$value": "#D1E9FF",
+        "$description": "'Estilos de formatação/Azul Claro 100' no Figma"
+      },
+      "verde-escuro-100": {
+        "$type": "color",
+        "$value": "#2FA836",
+        "$description": "'Estilos de formatação/Verde escuro 100' no Figma. Gap Q22: sem par 50"
+      },
+      "amarelo": {
+        "$type": "color",
+        "$value": "#FFF050",
+        "$description": "'Estilos de formatação/Amarelo' no Figma. Gap Q22: sem variantes de opacidade"
+      },
+      "ancora": {
+        "$type": "color",
+        "$value": "#E0CBFB",
+        "$description": "'Estilos de formatação/Âncora' no Figma. Gap Q22: sem variantes de opacidade"
+      },
+      "sem-registro": {
+        "$type": "color",
+        "$value": "#FFCACA",
+        "$description": "Renomeado por decisão Q21 (original: ' Sem registro', com espaço líder). Gap Q22: sem variantes de opacidade"
+      },
+      "verde-muito-claro": {
+        "$type": "color",
+        "$value": "#FAFFF6",
+        "$description": "Renomeado por decisão Q21 (original: 'Green light'). Gap Q22: sem variantes de opacidade"
+      }
+    }
+  }
+}

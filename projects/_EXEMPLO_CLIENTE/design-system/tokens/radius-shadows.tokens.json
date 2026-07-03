@@ -1,0 +1,56 @@
+{
+  "$description": "[PREENCHER] Par machine-readable de radius-shadows.md — formato DTCG. Gerado a partir de radius-shadows.md, nunca editado direto sem espelhar lá também.",
+  "radius": {
+    "primitive": {
+      "PREENCHER": {
+        "$type": "dimension",
+        "$value": "0px",
+        "$description": "[PREENCHER]"
+      }
+    },
+    "sm": {
+      "$type": "dimension",
+      "$value": "{radius.primitive.PREENCHER}",
+      "$description": "Elementos pequenos: checkbox, tag, tooltip"
+    },
+    "md": {
+      "$type": "dimension",
+      "$value": "{radius.primitive.PREENCHER}",
+      "$description": "Botões, inputs, cards pequenos"
+    },
+    "lg": {
+      "$type": "dimension",
+      "$value": "{radius.primitive.PREENCHER}",
+      "$description": "Cards principais, modais, containers de conteúdo"
+    },
+    "full": {
+      "$type": "dimension",
+      "$value": "{radius.primitive.PREENCHER}",
+      "$description": "Avatares, chips, botões pílula — geralmente 9999px"
+    }
+  },
+  "shadow": {
+    "elevation-1": {
+      "$type": "shadow",
+      "$value": {
+        "color": "{color.primitive.PREENCHER}",
+        "offsetX": "0px",
+        "offsetY": "0px",
+        "blur": "0px",
+        "spread": "0px"
+      },
+      "$description": "[PREENCHER] Elevação sutil (card sobre canvas) — se o legado não tiver nenhum effect style, deixar este bloco vazio/ausente em vez de inventar"
+    },
+    "elevation-2": {
+      "$type": "shadow",
+      "$value": {
+        "color": "{color.primitive.PREENCHER}",
+        "offsetX": "0px",
+        "offsetY": "0px",
+        "blur": "0px",
+        "spread": "0px"
+      },
+      "$description": "[PREENCHER] Elevação de destaque (modal, popover)"
+    }
+  }
+}

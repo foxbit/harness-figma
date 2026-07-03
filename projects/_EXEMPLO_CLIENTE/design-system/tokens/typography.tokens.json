@@ -1,0 +1,94 @@
+{
+  "$description": "[PREENCHER] Par machine-readable de typography.md — formato DTCG. Gerado a partir de typography.md, nunca editado direto sem espelhar lá também.",
+  "typography": {
+    "primitive": {
+      "font-heading": {
+        "$type": "fontFamily",
+        "$value": ["PREENCHER", "sans-serif"],
+        "$description": "Fonte usada em títulos"
+      },
+      "font-body": {
+        "$type": "fontFamily",
+        "$value": ["PREENCHER", "sans-serif"],
+        "$description": "Fonte usada em corpo de texto"
+      }
+    },
+    "display-lg": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{typography.primitive.font-heading}",
+        "fontSize": "0px",
+        "fontWeight": "400",
+        "lineHeight": "1",
+        "letterSpacing": "0px"
+      },
+      "$description": "[PREENCHER] Maior destaque de título (hero, telas de abertura)"
+    },
+    "heading-lg": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{typography.primitive.font-heading}",
+        "fontSize": "0px",
+        "fontWeight": "400",
+        "lineHeight": "1",
+        "letterSpacing": "0px"
+      },
+      "$description": "[PREENCHER] Título de seção principal"
+    },
+    "heading-md": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{typography.primitive.font-heading}",
+        "fontSize": "0px",
+        "fontWeight": "400",
+        "lineHeight": "1",
+        "letterSpacing": "0px"
+      },
+      "$description": "[PREENCHER] Título de subseção"
+    },
+    "body-lg": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{typography.primitive.font-body}",
+        "fontSize": "0px",
+        "fontWeight": "400",
+        "lineHeight": "1",
+        "letterSpacing": "0px"
+      },
+      "$description": "[PREENCHER] Corpo de texto em destaque"
+    },
+    "body-md": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{typography.primitive.font-body}",
+        "fontSize": "0px",
+        "fontWeight": "400",
+        "lineHeight": "1",
+        "letterSpacing": "0px"
+      },
+      "$description": "[PREENCHER] Corpo de texto padrão"
+    },
+    "label-caps": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{typography.primitive.font-body}",
+        "fontSize": "0px",
+        "fontWeight": "400",
+        "lineHeight": "1",
+        "letterSpacing": "0px"
+      },
+      "$description": "[PREENCHER] Rótulos curtos, geralmente caixa-alta"
+    },
+    "caption": {
+      "$type": "typography",
+      "$value": {
+        "fontFamily": "{typography.primitive.font-body}",
+        "fontSize": "0px",
+        "fontWeight": "400",
+        "lineHeight": "1",
+        "letterSpacing": "0px"
+      },
+      "$description": "[PREENCHER] Texto de apoio, legendas, metadados"
+    }
+  }
+}

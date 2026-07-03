@@ -26,9 +26,16 @@ remover/ajustar a regra acima]
 ## Uso de tokens (obrigatório)
 - Nenhum valor de cor, espaçamento, raio ou tipografia pode ser
   hardcoded dentro de um componente — sempre vinculado a variável do
-  Figma
-- Componente com valor hardcoded é bloqueado para promoção (verificado
-  pelo auditor) até correção
+  Figma E ao token **semântico** correspondente catalogado em
+  `design-system/tokens/*.md` (formato DTCG — ver cabeçalho de
+  `tokens/colors.md` para a convenção completa)
+- Referenciar sempre o nome semântico (`color.primary`, `spacing.md`,
+  `radius.lg`), nunca o primitivo bruto (`color.primitive.blue-500`) e
+  nunca o valor solto (`#1A1C1E`) — o primitivo existe só para o
+  semântico apontar para ele, não para uso direto em componente
+- Componente com valor hardcoded, ou vinculado a um primitivo em vez de
+  um semântico, é bloqueado para promoção (verificado pelo auditor) até
+  correção
 
 ## Componentes aninhados
 - Se um componente contém outro (ex: Card contém Button), o componente

@@ -1,0 +1,67 @@
+{
+  "$description": "[PREENCHER] Par machine-readable de colors.md — formato W3C Design Tokens Community Group (DTCG draft, https://www.designtokens.org/TR/drafts/format/). Gerado a partir de colors.md, nunca editado direto sem espelhar lá também. Valores abaixo são placeholder até o onboarding/preflight preencher os reais.",
+  "color": {
+    "primitive": {
+      "PREENCHER": {
+        "$type": "color",
+        "$value": "#000000",
+        "$description": "[PREENCHER] nome real do primitivo e origem (variável do Figma ou hardcoded)"
+      }
+    },
+    "primary": {
+      "$type": "color",
+      "$value": "{color.primitive.PREENCHER}",
+      "$description": "Cor principal da marca — CTAs primários, destaques"
+    },
+    "secondary": {
+      "$type": "color",
+      "$value": "{color.primitive.PREENCHER}",
+      "$description": "Textos secundários, ícones de apoio"
+    },
+    "tertiary": {
+      "$type": "color",
+      "$value": "{color.primitive.PREENCHER}",
+      "$description": "Interações críticas, estados ativos"
+    },
+    "neutral": {
+      "$type": "color",
+      "$value": "{color.primitive.PREENCHER}",
+      "$description": "Fundos secundários, áreas de baixo contraste"
+    },
+    "canvas": {
+      "$type": "color",
+      "$value": "{color.primitive.PREENCHER}",
+      "$description": "Fundo de página"
+    },
+    "surface": {
+      "$type": "color",
+      "$value": "{color.primitive.PREENCHER}",
+      "$description": "Fundo de cards, modais, containers"
+    },
+    "hairline": {
+      "$type": "color",
+      "$value": "{color.primitive.PREENCHER}",
+      "$description": "Bordas finas de 1px, divisores"
+    },
+    "on-primary": {
+      "$type": "color",
+      "$value": "{color.primitive.PREENCHER}",
+      "$description": "Texto sobre fundo primary (alto contraste)"
+    },
+    "success": {
+      "$type": "color",
+      "$value": "{color.primitive.PREENCHER}",
+      "$description": "Estados de sucesso/confirmação"
+    },
+    "warning": {
+      "$type": "color",
+      "$value": "{color.primitive.PREENCHER}",
+      "$description": "Estados de atenção"
+    },
+    "error": {
+      "$type": "color",
+      "$value": "{color.primitive.PREENCHER}",
+      "$description": "Estados de erro/destrutivos"
+    }
+  }
+}

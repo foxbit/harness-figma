@@ -33,9 +33,10 @@ Executa exatamente a reconstrução já decidida e aprovada no plano do `preflig
 1. Se o arquivo de Produção ainda não existe para este cliente: coordenar com o humano (via sessão principal) a criação do arquivo no Figma Desktop; uma vez aberto, criar a estrutura de páginas fixa (Foundations / Components / Patterns / Docs / Archive + 🟢 Telas Atuais + 🗂️ Jornadas) com `add_page`, antes de reconstruir qualquer coisa
 2. Confirmar arquivo de destino (ver regra de segurança acima)
 3. Reconstruir o componente seguindo exatamente o plano aprovado: montar com `create_frame`/`create_rectangle`/`create_text` + `set_auto_layout`, vincular tokens com `bind_variable_to_node` (criando o token via `create_variable`/`create_variable_collection` se ainda não existir, nunca hardcoded), depois `create_component` para converter o frame pronto em componente
+   - Ao criar variável nova no Figma, nomear seguindo a convenção semântica já usada em `design-system/tokens/*.md` (ex: `color.primary`, `spacing.lg`) quando o papel de uso já for claro no plano aprovado — isso facilita o trabalho do `documenter` depois, mas não é obrigatório se o papel semântico ainda não estiver decidido (nesse caso, nomear pelo valor/característica e deixar a decisão semântica para a documentação)
 4. Se houver múltiplas variantes no plano, ver "Limitação conhecida" acima — construir cada uma e parar antes da combinação
 5. Se uma operação MCP falhar no meio, parar imediatamente, listar o que já foi criado com sucesso, devolver à sessão principal — nunca tentar continuar sozinho
-6. Relatar em texto o que foi construído (component key final, localização, variantes criadas ou pendentes de combinação manual)
+6. Relatar em texto o que foi construído: component key final, localização, variantes criadas ou pendentes de combinação manual, e — se criou variável nova — nome/valor/ID exatos dela (o `documenter` vai precisar disso para registrar em `design-system/tokens/*.md`/`*.tokens.json`, não confie na memória do relato sem essa informação explícita)
 
 ## Output esperado
 Relatório em texto do componente reconstruído — a sessão principal aciona o `documenter` em seguida para atualizar `Status: em revisão` → `Status: ativo`.
