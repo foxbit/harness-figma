@@ -8,12 +8,17 @@ promover conteúdo daqui para nenhum cliente real.
 # Projeto: _SANDBOX_TESTE (uso interno do harness)
 
 ## Figma — Legado
-- Nome do arquivo (exatamente como aparece no Figma — `fileName`): `mcp-test`
-- File-key: (não aplicável para testes — este MCP não expõe file-key)
+- File-key: `zLIBE0CQN1rQBUQxOswcef`
+- Nome do arquivo (`fileName`, informativo): `mcp-test`
 - Team / Projeto no Figma: sandbox local
+- Nota: neste sandbox o MESMO arquivo faz papel de legado e de alvo de
+  escrita dos testes — exceção consciente à regra "bridge nunca no
+  Legado", válida só aqui (não há dado real de cliente)
 
 ## Figma — Produção
-- Nome do arquivo: (nenhum ainda — testes de produção usam páginas isoladas dentro do próprio `mcp-test`, nunca um arquivo de produção real)
+- File-key: `zLIBE0CQN1rQBUQxOswcef` (o próprio `mcp-test` — testes de
+  produção usam páginas/Sections isoladas dentro dele, nunca um
+  arquivo de produção real)
 
 ## Status de migração
 Não aplicável — projeto de teste.

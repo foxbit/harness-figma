@@ -2,9 +2,9 @@
 [PREENCHER] Copie esta pasta inteira (projects/_EXEMPLO_CLIENTE) para
 projects/[nome-real-do-cliente] e preencha os campos abaixo. Este
 arquivo é o ponto de entrada de qualquer sessão de trabalho neste
-projeto — builder, preflight-builder e os agentes de leitura confirmam
-o fileName declarado aqui (via get_metadata) antes de qualquer
-operação; o MCP conectado não expõe file-key.
+projeto — os agentes de leitura usam o File-key do Legado para ler via
+REST, e builder/preflight-builder/documenter confirmam o File-key de
+Produção (via figma_get_status) antes de qualquer escrita.
 -->
 
 # Projeto: [Nome do Cliente]
@@ -14,11 +14,12 @@ operação; o MCP conectado não expõe file-key.
 escreve aqui, nunca. Usado como referência visual pelo onboarding e
 pelo preflight. -->
 - File-key: `[PREENCHER]`
-- Nome do arquivo (exatamente como aparece no Figma — `fileName`): `[PREENCHER]`
-  <!-- Campo crítico: o MCP conectado (figma-mcp-go) não expõe file-key,
-  só este nome de exibição. É contra ele que todo agente confirma "arquivo
-  certo aberto" antes de ler/escrever — ver CLAUDE.md, seção "Regra de
-  segurança". Mantenha exato, incluindo maiúsculas/espaços. -->
+  <!-- Campo crítico: identificador real do arquivo (está na URL:
+  figma.com/design/<FILE-KEY>/...). É por ele que os agentes leem o
+  Legado via REST — sem Figma Desktop e sem plugin. O plugin bridge
+  NUNCA deve ser rodado neste arquivo (ver CLAUDE.md, "Regra de
+  segurança"). -->
+- Nome do arquivo (`fileName`, informativo para humanos): `[PREENCHER]`
 - Team / Projeto no Figma: `[PREENCHER]`
 - Link direto: `[PREENCHER]`
 
@@ -26,8 +27,12 @@ pelo preflight. -->
 <!-- Arquivo novo, criado pelo preflight na primeira reconstrução.
 Único destino de escrita do builder e do preflight-builder. Fica vazio
 até a primeira execução do preflight para este cliente. -->
-- File-key: `[PREENCHER — vazio até o preflight criar o arquivo]`
-- Nome do arquivo (exatamente como aparece no Figma — `fileName`): `[PREENCHER — vazio até o preflight criar o arquivo]`
+- File-key: `[PREENCHER — vazio até o arquivo ser criado no 1º preflight]`
+  <!-- Campo crítico: é contra ele que builder/preflight-builder/
+  documenter confirmam o alvo de escrita (currentFileKey via
+  figma_get_status) antes de qualquer operação. Registrar assim que o
+  arquivo for criado (o key está na URL). -->
+- Nome do arquivo (`fileName`, informativo): `[PREENCHER — vazio até o arquivo existir]`
 - Team / Projeto no Figma: `[PREENCHER]`
 - Link direto: `[PREENCHER]`
 

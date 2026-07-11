@@ -69,9 +69,10 @@ qualquer agente deve:
 
 ### Pre-flight barato antes de agente caro (responsabilidade da sessão principal)
 Antes de invocar um subagente para uma tarefa que pode ser um beco sem
-saída óbvio, fazer uma checagem rápida e barata primeiro (`get_metadata`,
-`get_pages`, ou um `get_node` pontual), em vez de descobrir o problema só
-depois de um subagente inteiro já ter rodado. Exemplos já aplicados
+saída óbvio, fazer uma checagem rápida e barata primeiro
+(`figma_get_status`, `figma_list_open_files`, ou um `figma_execute` de
+leitura pontual), em vez de descobrir o problema só depois de um
+subagente inteiro já ter rodado. Exemplos já aplicados
 nesta base: confirmar que o arquivo certo está aberto antes de rodar uma
 varredura completa; confirmar que um node/página existe antes de propor
 um plano de reconstrução em cima dele.
@@ -102,19 +103,20 @@ A conta Figma é corporativa única (múltiplos clientes dentro dela). O
 isolamento entre clientes é feito por esta verificação de configuração,
 não por token separado.
 
-**Limitação do MCP conectado (`figma-mcp-go`)**: este servidor opera
-sobre o arquivo que estiver ativo no Figma Desktop (o plugin roda dentro
-de um arquivo por vez) e nunca expõe `file-key` — só `fileName`, o nome
-de exibição do arquivo, editável por qualquer pessoa e portanto não é
-um identificador criptograficamente confiável. Isso muda a natureza
-desta regra de segurança: a verificação por agente (`get_metadata` →
-comparar `fileName` contra o nome declarado em `PROJECT.md`) é uma
-camada adicional de checagem, mas a garantia real de "arquivo de
-Produção certo está aberto" depende do humano ter aberto esse arquivo
-no Figma Desktop antes de invocar `builder`/`preflight-builder`/
-`documenter`. Cada `PROJECT.md` deve declarar o `fileName` exato de
-Legado e de Produção (não só o file-key/link) para essa checagem ser
-possível.
+**Como verificar (MCP conectado: `figma-console-mcp`)**: a escrita vai
+para o arquivo ativo no bridge do Figma Desktop, e o servidor expõe o
+`fileKey` real desse arquivo (identificador criptográfico, não
+editável) via `figma_get_status`/`figma_list_open_files`. A checagem
+obrigatória antes de escrever é: `fileKey` do arquivo ativo ==
+`File-key` de Produção declarado no `PROJECT.md`. Se não bater, PARAR.
+Cada `PROJECT.md` deve declarar o `File-key` de Legado e de Produção
+(o `fileName` continua registrado, mas apenas como informação humana —
+a verificação é pelo key).
+
+**Proteção estrutural do Legado**: o arquivo Legado é lido via REST
+(por `fileUrl`/`fileKey`, sem plugin) — o plugin bridge NUNCA deve ser
+rodado dentro do arquivo Legado. Sem bridge no Legado, escrita nele é
+impossível por arquitetura, não só por regra.
 
 ---
 
@@ -288,8 +290,10 @@ harness está íntegro nesta máquina:
    builder, documenter, auditor, validator, onboard-scanner,
    onboard-analyst, onboard-writer, preflight-planner,
    preflight-builder)
-2. `.mcp.json` existe na raiz e o servidor `figma-mcp-go` aparece como
-   conectado
+2. O servidor `figma-console` aparece como conectado (`claude mcp
+   list`) — registro é de escopo de USUÁRIO (carrega token), então uma
+   máquina nova precisa refazer o `claude mcp add -s user ...` do
+   `README.md`; não há nada no repositório que o restaure
 
 Motivação real: numa migração de máquina (Linux → Windows), a cópia do
 projeto perdeu silenciosamente todos os arquivos ocultos — incluindo os
@@ -329,117 +333,116 @@ documentados (não apagar) para não quebrar referências em telas antigas.
 
 ## Conexão MCP com o Figma
 
-Este harness usa o servidor MCP `figma-mcp-go`
-(https://github.com/vkhanhqui/figma-mcp-go), registrado em `.mcp.json`
-na raiz do projeto (escopo de projeto, `claude mcp add -s project
-figma-mcp-go -- npx -y @vkhanhqui/figma-mcp-go@latest`). Detalhes de
-setup: ver `README.md`.
+Este harness usa o servidor MCP `figma-console-mcp`
+(https://github.com/southleft/figma-console-mcp), registrado em
+**escopo de usuário** (nunca de projeto — o registro carrega o token):
 
-Ponto crítico de arquitetura: TODA operação neste servidor — leitura e
-escrita — depende do plugin "figma-mcp-go" rodando dentro do Figma
-Desktop app aberto no arquivo-alvo. Diferente de uma conexão baseada em
-token de API, não existe modo remoto/read-only que dispense o Desktop:
-todos os 10 agentes, incluindo os somente-leitura (`interpreter`,
-`auditor`, `validator`, `onboard-scanner`, `preflight-planner`),
-precisam do plugin ativo no arquivo correto para funcionar. O Figma
-Desktop tem build oficial para Windows e macOS (ambiente atual:
-Windows, roda nativo); em Linux não há build oficial — ver `README.md`
-para as opções de contorno, se for o caso.
+```bash
+claude mcp add figma-console -s user \
+  -e FIGMA_ACCESS_TOKEN=figd_... -e ENABLE_MCP_APPS=true \
+  -- npx -y figma-console-mcp@latest
+```
 
-**Dev Mode bloqueia toda escrita.** Se qualquer tool de escrita
-retornar erro do tipo "Can't call X in read-only mode", a causa mais
-provável é a aba do Figma estar em Dev Mode (ícone `</>` no canto
-superior direito, atalho `Shift+D`) — é um estado de exibição do
-próprio Figma, independente da permissão de edição da conta, e a
-Plugin API do Figma bloqueia chamadas de escrita nesse estado. Alternar
-para Design mode resolve.
+Detalhes de setup (token, plugin Desktop Bridge): ver `README.md`.
+Histórico: substituiu o `figma-mcp-go` em 2026-07-11, após smoke test
+completo — ver `smoke-test-figma-console-mcp.md` para as evidências.
 
-### Limitações conhecidas do MCP conectado (`figma-mcp-go`)
+Arquitetura híbrida — o ponto mais importante:
+- **Leitura** vai por REST com o token, endereçada por
+  `fileUrl`/`fileKey` — NÃO exige Figma Desktop nem plugin. É assim
+  que o Legado é lido (o bridge nunca roda nele).
+- **Escrita** (e leitura de estado runtime via `figma_execute`) exige
+  o plugin "Figma Desktop Bridge" rodando no arquivo-alvo no Figma
+  Desktop (Windows/macOS; plugin de desenvolvimento precisa ser rodado
+  manualmente a cada sessão de trabalho).
 
-Duas lacunas de capacidade que afetam diretamente a execução do plano
-do `interpreter`/`preflight-planner` — não são bugs do harness, são
-ausência de funcionalidade no servidor conectado hoje:
+**Dev Mode bloqueia toda escrita.** Se uma operação de escrita falhar
+com "Can't call X in read-only mode", a aba do Figma provavelmente
+está em Dev Mode (ícone `</>`, atalho `Shift+D`) — a Plugin API
+bloqueia escrita nesse estado. Alternar para Design mode resolve.
 
-1. **Sem tool de "criar instância" de componente.** Só existem
-   `clone_node` (duplica qualquer node — preserva o vínculo com o
-   componente principal apenas se o node clonado já for uma `INSTANCE`)
-   e `swap_component` (troca o componente-mãe de uma instância já
-   existente). REUSO DIRETO só é executável se já existir pelo menos
-   uma instância do componente-alvo em algum lugar do arquivo para
-   clonar. Se for o primeiro uso real de um componente, `builder`/
-   `preflight-builder` param e reportam — não há como criar a primeira
-   instância via este MCP.
-2. **Sem tool de combinar componentes em variantes**
-   (`combineAsVariants` do Figma). A categoria `NOVA VARIANTE`
-   continua válida na classificação do `interpreter`, mas a execução
-   exige um passo manual do humano diretamente no Figma — `builder`/
-   `preflight-builder` constroem a variante como componente avulso e
-   param antes da combinação.
+### Política do `figma_execute` (decisão registrada — "A'")
 
-Se um MCP diferente vier a substituir `figma-mcp-go` no futuro, revisar
-estas duas limitações primeiro — podem deixar de existir.
+`figma_execute` roda código Plugin API arbitrário e é indispensável
+(leitura de Auto Layout/`boundVariables`, gestão de páginas e criação
+com controle fino dependem dele). Regras:
 
-### Erros conhecidos do MCP conectado (confirmados em teste real, não hipotéticos)
+1. Usar tools declarativas sempre que existirem
+   (`figma_instantiate_component`, `figma_create_component_set`,
+   `figma_set_fills`, `figma_rename_node`, etc.)
+2. `figma_execute` em agente de ESCRITA: permitido, com a intenção do
+   código descrita no plano aprovado — nunca improvisar mutações fora
+   do plano
+3. `figma_execute` em agente SOMENTE-LEITURA (`interpreter`,
+   `auditor`, `validator`, `onboard-scanner`, `preflight-planner`):
+   permitido APENAS com código de leitura — nenhuma chamada que mute o
+   documento (`create*`, `remove`, atribuições a propriedades,
+   `setBoundVariable` etc.). Isso é uma restrição de prompt, não de
+   ferramenta — trade-off consciente aceito na migração: a garantia
+   "hard" de whitelist não cobre o que acontece dentro do código.
+4. Usar as variantes assíncronas da Plugin API
+   (`getNodeByIdAsync`, `getInstancesAsync`, `setCurrentPageAsync`,
+   `loadAllPagesAsync`) — as síncronas falham com `documentAccess:
+   dynamic-page`. Carregar fontes (`loadFontAsync`) antes de criar
+   texto.
 
-3. **Não é possível apagar/remover a página atualmente ativa no Figma.**
-   `delete_page` (e operações de remoção em geral) falham com `"in
-   remove: Removing this node is not allowed"` se o alvo for a página
-   que está sendo exibida no momento no Figma Desktop. Sempre
-   `navigate_to_page` para OUTRA página antes de apagar a página-alvo.
-   Isso afeta diretamente o `documenter` ao promover uma tela para
-   "Telas Atuais" (que envolve apagar a versão anterior) — navegar para
-   fora da página em questão antes de tentar remover algo nela.
-4. **`scan_nodes_by_types` pode estourar limite de tokens em páginas
-   grandes** (páginas com muitos elementos retornam payload grande
-   demais). Nesses casos, usar `search_nodes` com um `limit` baixo como
-   alternativa funcional — foi o fallback usado com sucesso em teste
-   real nesta mesma situação.
-5. **`get_document` (árvore completa de uma página) estoura limite de
-   tokens em telas densas** — confirmado com 312.628 caracteres numa
-   única tela de login real. Fallback: em vez de puxar a árvore inteira,
-   combinar `scan_nodes_by_types` (por tipo, ex: `FRAME`/`TEXT`) +
-   `get_nodes_info` pontual num subconjunto de IDs + `scan_text_nodes`.
-6. **`get_node`/`get_nodes_info` expõem `padding` por nó, mas não
-   `layoutMode`/`itemSpacing`/sizing mode.** Revisão de um teste
-   anterior que registrava ausência total de propriedades de Auto
-   Layout — reconfirmado em teste real (tela "home" de biblioteca
-   digital) que o JSON bruto retornado TRAZ `padding` (ex:
-   top/right/bottom/left por nó) quando o nó tem Auto Layout. O que
-   continua ausente, confirmado no mesmo teste: `layoutMode` (não dá
-   para saber se é horizontal/vertical/nenhum), `itemSpacing` e os
-   sizing modes (hug/fixed/fill). Além disso, `styles` por nó também
-   traz `fillStyle`/`strokeStyle`/`textStyle` (nome do style vinculado,
-   quando existe) — o que permite checar hardcoded-vs-nomeado direto no
-   `get_node`, sem precisar de `get_styles` à parte.
-   **Consequência real**: a checagem "Ausência de Auto Layout" do
-   `COMPONENT_STANDARDS.md`, usada pelo `auditor` e pelo
-   `onboard-scanner`, pode confirmar `padding` via `get_node`, mas
-   `layoutMode`/`itemSpacing`/sizing continuam "não verificável via
-   MCP" — não afirmar presença/ausência desses três por inferência
-   (ex: espaçamento visual em `get_screenshot`), só o `padding` tem
-   confirmação direta.
+### Capacidades que deixaram de ser limitação (vs. figma-mcp-go)
 
-7. **IDs de variável/coleção usam formato prefixado, diferente de IDs
-   de node.** `get_variable_defs`/`create_variable_collection`/
-   `create_variable` retornam (e exigem de volta em `delete_variable`/
-   `bind_variable_to_node`) IDs no formato `VariableCollectionId:11:23697`
-   ou `VariableID:74:2135` — com o prefixo por extenso, ao contrário dos
-   IDs de node (`4003:33149`, sem prefixo). Passar só a parte numérica
-   para `delete_variable`/`bind_variable_to_node` falha com "Collection
-   not found"/erro equivalente. Sempre usar o ID exatamente como
-   retornado pela tool que o criou, nunca truncar o prefixo.
-8. **`create_component` pode resetar o sizing mode do Auto Layout para
-   "hug" ao converter um frame de tamanho fixo.** Observado em teste
-   real: um frame 200×90 com sizing `FIXED` voltou a 159×90 (hug) logo
-   após `create_component`. Corrigir com `resize_nodes` de volta ao
-   tamanho pretendido, e conferir com `get_node` depois da conversão —
-   não assumir que o tamanho do frame original se manteve.
+- Criar a PRIMEIRA instância de um componente:
+  `figma_instantiate_component` (passar `componentKey` E `nodeId`)
+- Combinar componentes em variantes: `figma_create_component_set`
+  (modo matriz a partir de base, ou combinar existentes)
+- Ler `layoutMode`/`itemSpacing`/paddings/sizing modes e
+  `boundVariables`: via `figma_execute` (leitura determinística
+  completa — a checagem de Auto Layout do `auditor` é 100% verificável)
+- Payload em páginas densas: leitura em duas passadas via
+  `figma_execute` (inventário raso → drill pontual); nunca serializar
+  árvore inteira
+- `fileKey` real exposto (`figma_get_status`) — base da regra de
+  segurança
 
-Todos os pontos acima já foram encontrados e contornados em testes
-reais do `builder`, `onboard-scanner` e `preflight-builder` (smoke
-tests com criação de componente, clonagem de instância, varredura de
-um arquivo legado real, e criação/vínculo de variável) — não são
-hipóteses, são comportamento confirmado.
+### Erros e quirks conhecidos (confirmados no smoke test de 2026-07-11)
+
+1. **Timeout ≠ falha limpa.** Uma tool que reporta "timed out" pode
+   ter EXECUTADO no Figma (confirmado: `figma_instantiate_component`
+   aplicou a operação 2× apesar de reportar timeout). Após QUALQUER
+   timeout de escrita: verificar o estado real no Figma antes de
+   retentar — retry cego duplica elementos. Isso integra o protocolo
+   de falha parcial do builder/preflight-builder.
+2. **Sync de tokens não vê coleções criadas na mesma sessão.**
+   `figma_export_tokens` com `scope: collection` pode vir vazio e
+   `figma_import_tokens` pode DUPLICAR uma coleção recém-criada via
+   `figma_create_variable*` (nem `refreshCache` resolve). Regra: cada
+   coleção nasce por UMA via — ou por `figma_import_tokens` (DTCG), ou
+   por `create_variable*` — sem misturar export/import na mesma sessão
+   em que a coleção foi criada. `figma_get_variables` (com
+   `refreshCache: true`) enxerga tudo e é a leitura confiável.
+3. **`figma_get_file_data` com `nodeIds` não faz drill-down** (retorna
+   a árvore de páginas em vez do nó pedido). Leitura cirúrgica de nós:
+   `figma_execute` com serialização rasa controlada.
+4. **Formatos de leitura padrão não expõem Auto Layout nem
+   `boundVariables`** (`figma_get_component` `reconstruction` retorna
+   stub raso com dimensões erradas; `metadata` não traz layout). Usar
+   `figma_execute` para essas propriedades.
+5. **`figma_instantiate_component` com `parentId` de frame com Auto
+   Layout pode dar timeout** (e ainda assim executar — ver quirk 1).
+   Preferir Section/página como destino e mover depois, ou
+   `comp.createInstance()` via `figma_execute` direto no pai.
+6. **Deletar a página ativa continua bloqueado pelo Figma**
+   (`Removing this node is not allowed`) — comportamento de
+   plataforma. Navegar para outra página antes, no mesmo bloco de
+   código (`setCurrentPageAsync` → `remove()`).
+7. **Criação de página é limitada pelo PLANO do arquivo** (Starter: 3
+   páginas). Não é erro do MCP — mas o `preflight-builder` deve
+   reportar esse erro como restrição de plano, não como falha.
+8. **Primeira conexão pode falhar** ("Failed to connect") pelo
+   download inicial do `npx` estourar o timeout do health check — com
+   cache aquecido conecta normal. O bridge usa fallback de porta
+   (9223–9232) automaticamente.
+
+IDs de variável/coleção continuam no formato prefixado
+(`VariableID:4016:22174`, `VariableCollectionId:4016:22173`) — usar
+sempre exatamente como retornados, nunca truncar o prefixo.
 
 ---
 

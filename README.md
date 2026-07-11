@@ -89,15 +89,16 @@ negociação das perguntas, uma por vez, registrada em
 
 Migra componentes do legado para o arquivo de Produção, **um por vez,
 quando uma demanda real precisa deles** — nunca em lote (big-bang). É
-também o módulo que cria o arquivo de Produção na primeira execução de
-um cliente. "Migrar" aqui significa **reconstruir do zero** seguindo
+também o módulo em que o arquivo de Produção nasce, na primeira
+execução de um cliente (a criação do ARQUIVO em si é manual — o agente
+cria a estrutura de páginas). "Migrar" aqui significa **reconstruir do zero** seguindo
 `COMPONENT_STANDARDS.md`, usando o legado só como referência visual —
 nunca copiar a estrutura problemática.
 
 | Agente | Quando entra | O que faz | Nunca faz |
 |---|---|---|---|
 | `preflight-planner` | Elemento marcado `MIGRAR DO LEGADO`, ou priorização manual do backlog | Lê o componente no Legado e propõe a reconstrução, destacando riscos de drift visual para a aprovação | Reconstruir, escrever no Figma |
-| `preflight-builder` | Plano de reconstrução aprovado | Reconstrói no arquivo de Produção (cria o arquivo e a estrutura de páginas na 1ª vez do cliente) | Escrever no Legado; decidir migrar algo fora do aprovado |
+| `preflight-builder` | Plano de reconstrução aprovado | Reconstrói no arquivo de Produção (cria a estrutura de páginas na 1ª vez do cliente; único agente que cria variáveis/tokens) | Escrever no Legado; decidir migrar algo fora do aprovado |
 
 Após a reconstrução, o `documenter` (do módulo de Produção) promove o
 componente: `Status: em revisão` → `Status: ativo`.
@@ -138,9 +139,9 @@ figma-harness/
 ├── onboarding/ONBOARDING.md    # processo do módulo de onboarding
 ├── preflight/PREFLIGHT.md      # processo do módulo de preflight
 ├── migration/MIGRATION.md      # variação leve: migrar tela legada
-├── mcp-figma/plugin/            # plugin figma-mcp-go já vendorizado
-│   ├── manifest.json             # importar direto no Figma Desktop
-│   └── dist/                     # code.js / index.html do plugin
+├── mcp-figma/plugin/            # LEGADO: plugin do figma-mcp-go
+│   │                              (MCP anterior — remover após a 1ª
+│   │                              jornada real no servidor novo)
 ├── .claude/agents/             # os 10 subagentes
 │   ├── interpreter.md / builder.md / documenter.md / auditor.md /
 │   │   validator.md                            ← produção
@@ -150,7 +151,7 @@ figma-harness/
 ├── skills/                     # procedimentos reutilizáveis
 └── projects/
     └── [nome-do-cliente]/      # um diretório por cliente/projeto
-        ├── PROJECT.md            # fileName exato: Legado e Produção
+        ├── PROJECT.md            # File-key de Legado e de Produção
         ├── design-system/        # tokens + components documentados
         ├── memory/               # decisões, aprendizados, changelog
         └── journeys/             # uma pasta por jornada construída
@@ -169,72 +170,77 @@ test dos 10 agentes) para consulta.
 
 ## Setup inicial (uma vez por máquina/instalação)
 
-### 1. Credenciais
+### 1. Personal Access Token do Figma
+
+Crie um token em Figma → Settings → Security → Personal access tokens
+(descrição sugerida: `Figma Console MCP`), com os scopes: **File
+content (Read)**, **File versions (Read)**, **Variables (Read)**,
+**Comments (Read/write)**. O token (`figd_...`) alimenta só a LEITURA
+via REST — a escrita no canvas passa pelo plugin bridge, por isso os
+scopes são de leitura. Copie na hora: não é exibido de novo. O
+`.env.example` segue de referência para outras integrações; **nunca**
+commite `.env` nem o token.
+
+### 2. Conectar o MCP do Figma — `figma-console-mcp`
+
+Este harness usa https://github.com/southleft/figma-console-mcp
+(substituiu o `figma-mcp-go` em 2026-07-11, após smoke test completo —
+ver `smoke-test-figma-console-mcp.md`). Arquitetura híbrida:
+**leitura via REST** por `fileUrl`/`fileKey`, sem Figma Desktop — é
+assim que o arquivo Legado é lido, sem nunca receber plugin — e
+**escrita via plugin Desktop Bridge** rodando no arquivo-alvo.
 
 ```bash
-cp .env.example .env
+claude mcp add figma-console -s user \
+  -e FIGMA_ACCESS_TOKEN=figd_SEU_TOKEN_AQUI \
+  -e ENABLE_MCP_APPS=true \
+  -- npx -y figma-console-mcp@latest
 ```
 
-`figma-mcp-go` (ver passo 2) não exige token de API — usa só o plugin
-bridge dentro do Figma Desktop. O `.env.example` fica de referência
-para credenciais que outras integrações do projeto venham a precisar.
-**Nunca** commite `.env`.
+> ⚠️ **Escopo `-s user` (ou `-s local`), NUNCA `-s project`** — o
+> registro carrega o token, e `-s project` gravaria em `.mcp.json`,
+> que é versionado. Consequência: cada máquina nova precisa refazer
+> este comando; nada no repositório restaura o registro.
 
-### 2. Conectar o MCP do Figma — `figma-mcp-go`
+A primeira checagem (`claude mcp list`) pode falhar enquanto o `npx`
+baixa o pacote — com o cache aquecido, mostra
+`figma-console ... ✔ Connected`.
 
-Este harness usa https://github.com/vkhanhqui/figma-mcp-go — testado e
-funcionando neste projeto (Node v20; ambiente atual: Windows, também
-já validado em Linux). Diferente de uma conexão por token de API, este
-servidor só enxerga o Figma através de um plugin rodando dentro do
-Figma Desktop, aberto no arquivo-alvo. Isso significa que **leitura e
-escrita exigem Figma Desktop igualmente** — não há um modo
-remoto/read-only que dispense o app, ao contrário do que se imaginava
-antes de testar na prática.
+**Plugin Desktop Bridge (obrigatório para ESCRITA; leitura dispensa):**
+1. O servidor materializa o plugin em
+   `~/.figma-console-mcp/plugin/manifest.json` na primeira execução
+2. Figma Desktop: **Plugins → Development → Import plugin from
+   manifest** → aponte para esse arquivo
+3. Abra o arquivo de **Produção** e rode o plugin (**Plugins →
+   Development → Figma Desktop Bridge**) — conecta sozinho via
+   WebSocket (portas 9223–9232). Plugins de desenvolvimento precisam
+   ser rodados a cada sessão de trabalho
+4. **NUNCA rode o plugin no arquivo Legado** — é a ausência do bridge
+   que torna escrita no Legado impossível por arquitetura (ver
+   `CLAUDE.md`, regra de segurança)
+5. Figma Desktop: build oficial para Windows (ambiente atual, nativo)
+   e macOS. Em Linux só a escrita exige contorno (VM/Wine) — a leitura
+   via REST funciona em qualquer OS
 
-```bash
-claude mcp add -s project figma-mcp-go -- npx -y @vkhanhqui/figma-mcp-go@latest
-```
+**Troubleshooting — "Can't call X in read-only mode":** a aba do Figma
+está em **Dev Mode** (ícone `</>`, atalho `Shift+D`) — a Plugin API
+bloqueia escrita nesse estado, para qualquer plugin. Alterne para
+Design mode.
 
-Isso grava a configuração em `.mcp.json` (raiz do projeto, versionado).
-Na primeira vez que o Claude Code for usado neste diretório depois
-disso, ele vai pedir aprovação do servidor — rode `claude` numa sessão
-interativa e aprove. Depois, `claude mcp list` deve mostrar
-`figma-mcp-go ... ✔ Connected`.
+As capacidades e quirks confirmados do servidor (timeout ≠ falha, sync
+de tokens, leitura de Auto Layout via `figma_execute` etc.) estão em
+`CLAUDE.md`, seção "Conexão MCP com o Figma". Os 10 agentes usam o
+prefixo `mcp__figma-console__*`, migrados com base no smoke test em
+`projects/_SANDBOX_TESTE/`. O que ainda vem com marcações
+`[PREENCHER]`/`[VALIDAR]` é o que é inerentemente por-cliente: o
+`PROJECT.md` de cada projeto novo (copiado de `_EXEMPLO_CLIENTE`) e
+alguns pontos listados em "Fora de escopo" abaixo.
 
-**Plugin no Figma Desktop (obrigatório para qualquer operação, não só escrita):**
-1. O plugin já vem vendorizado neste repo em `mcp-figma/plugin/` (não é
-   preciso baixar `plugin.zip` da release manualmente) — só use a
-   [release oficial](https://github.com/vkhanhqui/figma-mcp-go/releases)
-   se quiser atualizar para uma versão mais nova do que a commitada
-2. No Figma Desktop: **Plugins → Development → Import plugin from
-   manifest** → aponte para `mcp-figma/plugin/manifest.json`
-3. Abra o arquivo Figma que quiser usar e rode o plugin manualmente (**Plugins → Development → figma-mcp-go**) — plugins de desenvolvimento não iniciam sozinhos, é preciso rodar a cada sessão de trabalho
-4. O Figma Desktop tem build oficial para Windows e macOS (ambiente atual: Windows, roda nativo). Em Linux não há build oficial — escolha um caminho: VM Windows leve, Wine/CrossOver (não suportado oficialmente, risco de instabilidade), ou máquina física ocasional (Mac/Windows)
-
-**Troubleshooting conhecido — "Can't call X in read-only mode":**
-Isso não é falta de permissão de conta nem problema do plugin — é o
-Figma em **Dev Mode** (ícone `</>` no canto superior direito da aba,
-atalho `Shift+D`). Em Dev Mode a própria Plugin API do Figma bloqueia
-escrita, para qualquer plugin. Alterne para "Design mode" e tente de
-novo.
-
-**Duas limitações reais deste servidor**, já refletidas em
-`CLAUDE.md` e nos agentes: não existe tool para criar a primeira
-instância de um componente (só clonar uma instância já existente), e
-não existe tool para combinar componentes em variantes — ambas exigem
-um passo manual no Figma quando ocorrem. Não existe também exposição
-de `file-key`: a checagem de "arquivo correto" usa `fileName` (nome de
-exibição), então declare o nome exato de cada arquivo (Legado e
-Produção) no `PROJECT.md` de cada cliente.
-
-As 73 tools reais já estão nomeadas corretamente em
-`.claude/agents/*.md` (prefixo `mcp__figma-mcp-go__*`) — não há mais
-placeholder pendente de preenchimento nesta conexão. Os 10 agentes
-foram validados de ponta a ponta em `projects/_SANDBOX_TESTE/`. O que
-ainda vem com marcações `[PREENCHER]`/`[VALIDAR]` é o que é
-inerentemente por-cliente: o `PROJECT.md` de cada projeto novo (copiado
-de `_EXEMPLO_CLIENTE`) e alguns pontos listados em "Fora de escopo"
-abaixo.
+> Nota de transição: o servidor anterior (`figma-mcp-go`) permanece
+> registrado em `.mcp.json`, e o plugin dele vendorizado em
+> `mcp-figma/plugin/`, apenas como fallback — nenhum agente o usa
+> mais. Remover ambos quando a primeira jornada real completar no
+> servidor novo.
 
 ### 3. Criar um novo projeto/cliente
 
@@ -243,10 +249,12 @@ cp -r projects/_EXEMPLO_CLIENTE projects/nome-do-cliente
 ```
 
 Preencha, nesta ordem:
-1. `projects/nome-do-cliente/PROJECT.md` — pelo menos o `fileName`
-   exato do Legado (é isso que os agentes conferem via `get_metadata`,
-   não o file-key — ver seção 2 acima). O bloco de Produção fica vazio
-   até o preflight criar o arquivo
+1. `projects/nome-do-cliente/PROJECT.md` — pelo menos o **File-key**
+   do Legado (basta o link do arquivo — o key está na URL). É por ele
+   que os agentes leem o Legado via REST e que a regra de segurança
+   verifica o alvo de escrita. O bloco de Produção fica vazio até o
+   arquivo ser criado no primeiro preflight (criação do arquivo é
+   manual — o agente cria só a estrutura de páginas)
 2. Rode o onboarding (ver abaixo) antes de qualquer trabalho de
    produção
 
@@ -284,7 +292,8 @@ também ser rodado manualmente a partir do `migration-backlog.md`:
 [ aprovação humana ]
 
 "Use o preflight-builder com o plano aprovado"
-  → reconstrói no arquivo de Produção (cria o arquivo na primeira vez)
+  → reconstrói no arquivo de Produção (na 1ª vez: você cria o arquivo
+    manualmente e roda o plugin nele; o agente cria as páginas)
 
 "Use o documenter para promover Button/Primary"
   → Status: em revisão → ativo

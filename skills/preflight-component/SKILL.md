@@ -13,9 +13,11 @@ completo e a justificativa do modelo incremental (não big-bang).
    `COMPONENT_STANDARDS.md` e reaproveitando tokens já existentes
 2. Aprovação humana — inclui avaliar riscos de drift visual apontados
    pelo planner
-3. `preflight-builder` reconstrói no arquivo de Produção (cria o
-   arquivo e a estrutura de páginas se for a primeira execução do
-   cliente)
+3. `preflight-builder` reconstrói no arquivo de Produção — na primeira
+   execução do cliente, a criação do ARQUIVO é ação manual do humano
+   (criar no Figma, abrir, rodar o plugin bridge, registrar o
+   `File-key` no `PROJECT.md`); o agente cria só a estrutura de
+   páginas
 4. `documenter` (de produção) atualiza `Status: em revisão` →
    `Status: ativo`
 

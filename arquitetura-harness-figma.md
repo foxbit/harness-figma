@@ -276,25 +276,24 @@ Como a conta Figma é corporativa única, com os projetos de cada cliente
 organizados internamente dentro dela, o isolamento entre clientes **não
 é feito por credencial separada** — é feito por configuração:
 
-- O MCP conectado (`figma-mcp-go`) não usa token de API — opera via
-  plugin dentro do Figma Desktop, sobre o arquivo que estiver aberto —
-  e não expõe `file-key`, só `fileName` (o nome de exibição do arquivo)
+- O MCP conectado (`figma-console-mcp`) usa um token de leitura (REST)
+  e um plugin bridge para escrita, e expõe o `fileKey` real do arquivo
+  ativo — um identificador criptográfico, não editável
 - Cada projeto tem um `PROJECT.md` declarando explicitamente o
-  `fileName` exato dos dois arquivos daquele cliente (Legado e
-  Produção)
-- Antes de qualquer operação de escrita, o `builder` confirma (via
-  `get_metadata`) que o `fileName` do arquivo ativo corresponde ao de
-  Produção declarado — se não corresponder, para e alerta, nunca
-  prossegue
+  `File-key` dos dois arquivos daquele cliente (Legado e Produção)
+- Antes de qualquer escrita, o `builder` confirma (via
+  `figma_get_status`) que o `fileKey` do arquivo ativo no bridge
+  corresponde ao de Produção declarado — se não corresponder, para e
+  alerta, nunca prossegue
+- O Legado é lido via REST pelo `File-key`, sem plugin — e o bridge
+  NUNCA é rodado no Legado. Sem bridge, escrita no Legado é impossível
+  por arquitetura, não só por regra
 
-Isso significa que a proteção contra "escrever no projeto errado" é uma
-regra de processo (verificação obrigatória antes de escrever), não uma
-barreira técnica de permissão — e como `fileName` é um nome de exibição
-editável, não um identificador criptográfico, a garantia real depende
-do humano ter aberto o arquivo certo no Figma Desktop antes de invocar
-um agente de escrita (ver `CLAUDE.md`, seção "Regra de segurança").
-Isso exige disciplina de sempre declarar o `PROJECT.md` corretamente
-antes de operar em um cliente novo.
+Isso significa que a proteção contra "escrever no projeto errado" tem
+duas camadas: uma verificação por identificador criptográfico antes de
+cada escrita, e a garantia estrutural de que o arquivo Legado nem
+sequer possui o canal de escrita. Resta a disciplina de declarar o
+`PROJECT.md` corretamente antes de operar em um cliente novo.
 
 Já `memory/` (decisões, aprendizados, changelog) é sempre isolada por
 projeto — nunca compartilhada entre clientes, por razão de
@@ -423,13 +422,21 @@ Docs / Archive — ver `CLAUDE.md`), duas páginas fixas de telas:
 
 ### A dependência real do Figma Desktop
 
-O harness usa `figma-mcp-go` em vez do MCP oficial do Figma. Esse
-servidor opera inteiramente através de um plugin rodando dentro do
-Figma Desktop, aberto no arquivo-alvo — **leitura e escrita
-igualmente**: não existe modo remoto/read-only que dispense o app
-(hipótese avaliada e descartada após teste na prática). Todos os 10
-agentes, incluindo os somente-leitura, precisam do plugin ativo no
-arquivo correto. O Figma Desktop tem build oficial para Windows e
-macOS (o ambiente atual é Windows, onde roda nativo); em Linux não há
-build oficial — nesse caso, VM Windows, Wine ou máquina física
-ocasional (ver `README.md`).
+O harness usa `figma-console-mcp` (Southleft) — que substituiu o
+`figma-mcp-go` em 2026-07-11, após um smoke test completo eliminar as
+duas limitações que definiam o desenho anterior (criar primeira
+instância e combinar variantes; ver `smoke-test-figma-console-mcp.md`).
+A arquitetura é híbrida:
+
+- **Leitura via REST** (token + `fileKey`): não exige Figma Desktop.
+  Cobre a leitura do Legado por inteiro — onboarding e preflight leem
+  o arquivo do cliente sem nunca instalar plugin nele.
+- **Escrita via plugin Desktop Bridge**: exige Figma Desktop com o
+  plugin rodando no arquivo de Produção, a cada sessão. Windows/macOS
+  nativo; em Linux, só a escrita exige contorno (VM/Wine).
+
+Um trade-off consciente veio junto: parte da construção e da leitura
+fina (Auto Layout, vínculos de token) passa por `figma_execute`
+(código Plugin API), o que troca a garantia "hard" de whitelist de
+tools por uma política de código-no-plano-aprovado — ver a política A'
+em `CLAUDE.md`.

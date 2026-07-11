@@ -10,7 +10,9 @@ completo.
    bruto sem julgamento — em duas passadas (visual/screenshot primeiro
    para pesquisa barata, consulta estrutural pontual depois só nos
    candidatos sinalizados; nunca dump de árvore/catálogo inteiro de uma
-   vez, ver `onboard-scanner.md`)
+   vez, ver `onboard-scanner.md`). A leitura do Legado é via REST por
+   `fileUrl`/`File-key` — NÃO exige Figma Desktop e o plugin bridge
+   nunca roda no Legado
 2. `onboard-analyst` cruza o inventário, identifica suspeitas de
    duplicata/inconsistência, formula perguntas objetivas
 3. Negociação com o humano, uma pergunta por vez, respostas registradas
