@@ -38,6 +38,11 @@ Nenhuma fase pula para a seguinte sem o output completo da anterior.
 - `design-system/components/*.md` — populados, todos com
   `Status: em revisão` (ainda não existem no arquivo de Produção — isso
   é trabalho do preflight)
+- `design-system/design.md` — identidade visual do projeto
+  (`Status: em revisão`): valores exatos da fonte autoral + seções
+  perceptuais descritas sobre as telas canônicas que o
+  `onboard-scanner` selecionou. É o insumo estético obrigatório de
+  toda construção futura — ver `CLAUDE.md`, seção "Identidade visual"
 - `migration-backlog.md` — lista priorizável do que precisa passar por
   preflight
 

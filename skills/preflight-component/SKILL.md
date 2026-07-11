@@ -10,7 +10,8 @@ completo e a justificativa do modelo incremental (não big-bang).
 ## Resumo do procedimento
 1. `preflight-planner` lê o componente no Legado como referência,
    propõe reconstrução (nunca duplicação) seguindo
-   `COMPONENT_STANDARDS.md` e reaproveitando tokens já existentes
+   `COMPONENT_STANDARDS.md` e o `design.md` (identidade visual),
+   reaproveitando tokens já existentes
 2. Aprovação humana — inclui avaliar riscos de drift visual apontados
    pelo planner
 3. `preflight-builder` reconstrói no arquivo de Produção — na primeira

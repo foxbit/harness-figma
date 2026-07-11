@@ -9,7 +9,8 @@ tela específica da jornada via MCP no Figma.
    `figma_get_status`) deve corresponder ao `File-key` de Produção
    declarado no `PROJECT.md` (regra de segurança do `CLAUDE.md`)
 2. Receber o trecho do plano referente a esta tela + o
-   `journey-state.md` atualizado até aqui
+   `design-system/design.md` e a tela canônica de referência indicada
+   no plano + o `journey-state.md` atualizado até aqui
 3. Executar por elemento, conforme classificação do plano:
    - REUSO DIRETO → `figma_instantiate_component` (componentKey +
      nodeId de `figma_search_components` da MESMA sessão; funciona

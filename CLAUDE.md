@@ -226,6 +226,35 @@ regra de falha parcial abaixo).
 
 ---
 
+## Identidade visual — `design.md` (insumo estético obrigatório)
+
+Cada projeto tem um `design-system/design.md`: o documento de
+identidade visual que ensina os agentes a construir com a cara do
+cliente (tom, tema, regras de cor/tipografia/forma/espaçamento,
+anatomia dos componentes-chave, Do/Don'ts estéticos e telas
+canônicas). Ele absorveu o antigo `principles.md`. Motivação real:
+sem esse insumo, a construção sai estruturalmente correta e
+esteticamente genérica — confirmado em teste de jornada no sandbox.
+
+- **Origem**: gerado no onboarding pelo `onboard-writer` (valores
+  numéricos SEMPRE da fonte autoral via MCP — nunca estimados de
+  imagem; seções perceptuais descritas sobre as telas canônicas que o
+  `onboard-scanner` seleciona). Nasce `Status: em revisão`; só vale
+  após aprovação humana. Cliente sem Figma legado: preenchido por
+  inferência visual, com cada valor marcado `[INFERIDO]`.
+- **Consumo obrigatório**: `interpreter` e `preflight-planner` citam o
+  design.md nas decisões estéticas dos planos; `builder`/
+  `preflight-builder` o recebem no prompt de delegação junto com UMA
+  tela canônica de referência, e a crítica visual (screenshot →
+  iteração) compara contra os Do/Don'ts; `validator` checa coerência
+  estética da jornada contra ele.
+- **Regra de precedência estética**: token/valor exato documentado >
+  regra do `design.md` > julgamento do modelo. O modelo NUNCA decide
+  estética quando existe regra escrita — e quando decidir (lacuna),
+  o relatório aponta a lacuna para virar regra depois.
+
+---
+
 ## Onde vive o status de migração — não confundir com journey-state.md
 
 Duas informações diferentes, dois lugares diferentes:

@@ -1,7 +1,7 @@
 ---
 name: onboard-writer
 description: Gera design-system/tokens/*.md e design-system/components/*.md (Status em revisão) + migration-backlog.md, a partir do inventário, das suspeitas resolvidas e das decisões do humano. Última fase do onboarding. Nunca escreve no Figma. Nunca roda com perguntas pendentes.
-tools: Read, Write, Edit, Grep, Glob, mcp__figma-console__figma_get_status, mcp__figma-console__figma_get_file_data, mcp__figma-console__figma_get_component, mcp__figma-console__figma_search_components, mcp__figma-console__figma_get_variables, mcp__figma-console__figma_get_styles, mcp__figma-console__figma_get_text_styles
+tools: Read, Write, Edit, Grep, Glob, mcp__figma-console__figma_get_status, mcp__figma-console__figma_get_file_data, mcp__figma-console__figma_get_component, mcp__figma-console__figma_search_components, mcp__figma-console__figma_get_variables, mcp__figma-console__figma_get_styles, mcp__figma-console__figma_get_text_styles, mcp__figma-console__figma_take_screenshot
 model: sonnet
 ---
 
@@ -36,11 +36,18 @@ design system. Encerra o onboarding.
 3. Preencher `design-system/tokens/*.md` com os tokens reais do legado (`figma_get_styles`/`figma_get_variables` como confirmação — declarar lacunas se variáveis do legado forem ilegíveis sem bridge), formato DTCG: **primitivos** (valores brutos) + **semânticos** (papéis de uso referenciando primitivos via `{grupo.primitive.nome}`). Nunca pular a camada semântica
    - Atualizar o par machine-readable (`*.tokens.json`) — o `.md` é editado primeiro; o `.json` reflete, nunca o contrário
    - Se o legado não tiver token/estilo formal numa categoria, registrar "nenhum catalogado no legado" em vez de inventar
-4. Gerar `migration-backlog.md`: lista priorizável para preflight, com justificativa de prioridade por item
+4. Gerar `design-system/design.md` (a partir do template do harness), a identidade visual do projeto:
+   - **Valores numéricos** (cor, tipografia, raios, sombras, espaçamento): SEMPRE da fonte autoral já lida (tokens/styles/inventário) — nunca estimados de imagem. Referenciar tokens semânticos, não hex soltos
+   - **Seções perceptuais** (identidade e tom, tema visual, Do/Don'ts): reler as telas canônicas marcadas pelo `onboard-scanner` no inventário via `figma_take_screenshot` (com `fileUrl` do Legado) e descrever o que se VÊ — densidade, personalidade, hierarquia dominante. Os Do/Don'ts devem ser verificáveis num screenshot
+   - **Anatomia dos componentes-chave**: resumo dos 3–6 componentes centrais a partir do inventário
+   - **Referências canônicas**: copiar a seleção do scanner (nodeId, página, justificativa)
+   - Nasce com `Status: em revisão` — só vale após aprovação humana (como as demais saídas)
+5. Gerar `migration-backlog.md`: lista priorizável para preflight, com justificativa de prioridade por item
 
 ## Output esperado
 - `design-system/tokens/*.md` populados
 - `design-system/components/*.md` populados (`Status: em revisão`)
+- `design-system/design.md` (`Status: em revisão`)
 - `projects/[cliente]/migration-backlog.md`
 
 ## Ver também

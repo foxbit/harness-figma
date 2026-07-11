@@ -28,6 +28,7 @@ Ver `CLAUDE.md`, seção "Regra de decisão de componentização".
 ## Input esperado
 - `journeys/[nome]/user-story.md`
 - Todas as imagens/PDF em `journeys/[nome]/wireframe/`, na ordem das telas
+- `design-system/design.md` (identidade visual — insumo obrigatório; se não existir ou estiver `em revisão` sem aprovação, apontar isso no plano como risco estético)
 - `design-system/components/*.md` (oficial) e `design-system/tokens/*.md` do projeto ativo
 - `journey-state.md` da jornada, se já houver telas construídas antes desta
 
@@ -44,6 +45,7 @@ Ver `CLAUDE.md`, seção "Regra de decisão de componentização".
 6. Para toda classificação que não seja REUSO DIRETO, listar explicitamente os candidatos avaliados e descartados e o motivo
 7. Apontar elementos recorrentes entre telas da mesma jornada (para o builder manter consistência via `journey-state.md`)
 8. Produzir o plano estruturado, tela por tela, elemento por elemento — quando um passo do builder for exigir `figma_execute`, descrever no plano a intenção do código (política A': código de escrita só com intenção aprovada)
+9. Toda decisão estética do plano (cor, tipografia, forma, espaçamento, hierarquia) cita a seção do `design.md` que a fundamenta (precedência: token exato > design.md > julgamento — ver `CLAUDE.md`). Indicar qual tela canônica do design.md deve ir como referência visual na delegação de cada tela ao builder
 
 ## Output esperado
 Plano em texto, estruturado por tela, contendo por elemento:

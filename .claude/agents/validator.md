@@ -26,6 +26,7 @@ jornada, nunca correção técnica (isso é o `auditor`).
 ## Input esperado
 - `journeys/[nome]/user-story.md`
 - Todas as imagens de `journeys/[nome]/wireframe/`
+- `design-system/design.md` (identidade visual — base da checagem de coerência estética)
 - `journeys/[nome]/journey-state.md` completo (todas as telas)
 - Telas construídas no arquivo de Produção — confirmar `currentFileKey`
   (`figma_get_status`) contra o `PROJECT.md` antes de avaliar
@@ -35,6 +36,7 @@ jornada, nunca correção técnica (isso é o `auditor`).
 2. Ler o wireframe original tela por tela
 3. Inspecionar cada tela construída: `figma_capture_screenshot` (estado runtime — reflete mudanças recentes, preferir sobre `figma_take_screenshot`) para comparação visual + `figma_execute` de leitura para estrutura (hierarquia, textos, instâncias) onde a imagem não basta
 4. Verificar coerência entre telas da mesma jornada (mesmo tipo de elemento resolvido de formas diferentes é falha a reportar)
+4a. Verificar coerência estética contra o `design.md`: cada item da seção Do/Don't checável nos screenshots, densidade/hierarquia compatíveis com as telas canônicas, e nenhuma decisão estética visivelmente "inventada" fora das regras — reportar violações por tela (isto NÃO substitui a checagem técnica de tokens do `auditor`; aqui é composição e aparência)
 5. Se a jornada envolve navegação/protótipo, ler as reactions via `figma_execute` (`node.reactions`) e conferir contra os "Passos esperados" do `user-story.md`
 6. Verificar escopo: nada faltando, nada além do que a história pedia ("escopo inflado")
 7. Gerar `journeys/[nome]/validation-report.md`

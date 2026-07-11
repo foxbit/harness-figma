@@ -63,6 +63,7 @@ depois disso, e a sessão principal registra o novo `File-key` no
 
 ## Input esperado
 - Plano de reconstrução aprovado (do `preflight-planner`), incluindo intenções de código para os passos via `figma_execute`
+- `design-system/design.md` (identidade visual) — a reconstrução segue as regras de forma/tipografia/Do/Don'ts dele; precedência: token exato > design.md > julgamento (ver `CLAUDE.md`)
 - `PROJECT.md` do projeto ativo (`File-key` de Produção, ou indicação de que ainda não existe)
 
 ## Processo
@@ -70,7 +71,7 @@ depois disso, e a sessão principal registra o novo `File-key` no
 2. Confirmar arquivo de destino (regra de segurança acima)
 3. Reconstruir o componente na página **Components**, seguindo exatamente o plano: estrutura com Auto Layout e sizing modes explícitos, tokens vinculados (fill via `figma_set_fills` + `variableId`; demais via `setBoundVariable` no código), criando a variável antes se o plano previr (nomeação semântica conforme `design-system/tokens/*.md` quando o papel de uso estiver claro no plano)
 4. Se houver múltiplas variantes no plano: construir cada COMPONENT e combinar com `figma_create_component_set`
-5. Validar visualmente com `figma_capture_screenshot`
+5. Validar visualmente com `figma_capture_screenshot`, criticando contra os Do/Don'ts do `design.md` e contra o screenshot do componente legado (referência de intenção visual — drift consciente aprovado no plano é aceito; drift não previsto é achado a reportar)
 6. Em falha de MCP, elemento inesperado ou timeout não confirmado: parar, listar o que já foi criado, devolver à sessão principal
 7. Relatar em texto: component key final, localização, variantes criadas, e — se criou variável nova — nome/valor/ID exatos (o `documenter` precisa disso; ele vai confirmar via `figma_get_variables` com `refreshCache: true`, nunca via export)
 

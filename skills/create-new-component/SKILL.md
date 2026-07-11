@@ -10,7 +10,9 @@ nova variante — para isso ver a seção correspondente em
    `design-system/components/*.md` (oficial) — se restar dúvida, parar e
    perguntar em vez de criar
 2. Nomear seguindo `design-system/COMPONENT_STANDARDS.md`
-   (`Categoria/Nome — Variante`)
+   (`Categoria/Nome — Variante`); estética (forma, tipografia,
+   espaçamento) segue o `design-system/design.md` — precedência: token
+   exato > design.md > julgamento do modelo
 3. Criar usando Auto Layout com sizing modes explícitos (via
    `figma_execute`, com a intenção do código no plano aprovado —
    política A' do `CLAUDE.md`), sem valores hardcoded — vincular a

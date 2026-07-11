@@ -46,6 +46,7 @@ inventário precisa das duas.
 ### Passada 1 — pesquisa visual (barata, toda página)
 1. `figma_get_file_data` com `fileUrl` do Legado, `verbosity: "summary"`, `depth: 1` — lista de páginas e frames de topo
 2. Para cada página/frame relevante: `figma_take_screenshot` (com `fileUrl` + `nodeId` — cai no export REST, sem bridge) + leitura visual — registrar narrativa (telas, componentes visíveis, padrões repetidos) e lista de **candidatos** a checagem estrutural (não é julgamento de duplicata — é "parece familiar, checar na Passada 2")
+2a. Ao final da Passada 1, marcar no inventário as **3–5 telas canônicas** — as que melhor representam a linguagem visual do produto (densidade, cor, tipografia em uso típico) — com nodeId, página e uma frase de justificativa cada. Elas alimentam o `design.md` gerado pelo `onboard-writer` e serão a referência visual dos builders (ver `CLAUDE.md`, seção "Identidade visual"). É seleção de representatividade, não julgamento de qualidade
 3. `figma_get_styles`/`figma_get_text_styles` e `figma_get_variables` (uma vez, arquivo inteiro) para o catálogo de tokens/estilos formais — nota: sem bridge, `figma_get_variables` pode retornar dados parciais (API REST de variáveis é Enterprise; fallback via styles) — registrar explicitamente o que não pôde ser lido, nunca inventar
 
 ### Passada 2 — consulta estrutural cirúrgica (só nos candidatos)

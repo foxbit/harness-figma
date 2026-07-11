@@ -14,7 +14,9 @@ um plano de construção. Ver `.claude/agents/interpreter.md` para o
 processo completo e o formato de output esperado.
 
 ## Resumo do procedimento
-1. Ler user-story.md + todas as imagens de wireframe/ em ordem
+1. Ler user-story.md + design-system/design.md (identidade visual —
+   insumo estético obrigatório) + todas as imagens de wireframe/ em
+   ordem
 2. Para cada elemento de cada tela, classificar como REUSO DIRETO /
    NOVA VARIANTE / COMPONENTE NOVO / MIGRAR DO LEGADO contra
    design-system/components/*.md (nunca _draft/) E contra o que já foi

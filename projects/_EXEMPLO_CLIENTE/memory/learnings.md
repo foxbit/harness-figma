@@ -13,5 +13,5 @@ sentido para todos os clientes).
 ## [AAAA-MM-DD] — [Padrão identificado]
 - Observado em: [quais tarefas/jornadas]
 - Regra proposta: [PREENCHER]
-- Já aplicado em: [design-system/components/X.md | principles.md | etc]
+- Já aplicado em: [design-system/components/X.md | design.md | etc]
 -->

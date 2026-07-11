@@ -24,6 +24,7 @@ Equivalente ao `interpreter`, mas para o escopo de preflight.
 
 ## Input esperado
 - Componente-alvo no Legado: `File-key` do Legado (do `PROJECT.md`) + nome/nodeId vindos do `onboarding-inventory.md` ou `migration-backlog.md`
+- `design-system/design.md` (identidade visual — a proposta de reconstrução deve citar as regras dele: forma, tipografia, Do/Don'ts)
 - `design-system/COMPONENT_STANDARDS.md` e `design-system/tokens/*.md` do sistema novo
 - `design-system/components/[nome].md`, se já houver entrada `Status: em revisão` do onboarding
 

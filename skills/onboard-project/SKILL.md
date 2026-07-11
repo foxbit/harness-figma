@@ -16,9 +16,11 @@ completo.
 2. `onboard-analyst` cruza o inventário, identifica suspeitas de
    duplicata/inconsistência, formula perguntas objetivas
 3. Negociação com o humano, uma pergunta por vez, respostas registradas
-4. `onboard-writer` gera `design-system/tokens/*.md` e
-   `design-system/components/*.md` (com `Status: em revisão`) +
-   `migration-backlog.md`
+4. `onboard-writer` gera `design-system/tokens/*.md`,
+   `design-system/components/*.md` (com `Status: em revisão`),
+   `design-system/design.md` (identidade visual: valores exatos da
+   fonte autoral + Do/Don'ts descritos sobre as telas canônicas que o
+   scanner selecionou) + `migration-backlog.md`
 
 Nenhuma escrita no Figma acontece neste processo — onboarding é
 puramente leitura + documentação.

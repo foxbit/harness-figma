@@ -35,3 +35,32 @@ afetam o MOTOR (não um cliente) são espelhadas nos docs universais. -->
   nodeIds sem drill-down) estão documentados em `CLAUDE.md`; se algum
   se provar bloqueante em jornada real, reavaliar antes de reverter.
 - **Aprovado por**: Angelo Rosa (sessão de 2026-07-11).
+
+## 2026-07-11 — design.md como insumo estético obrigatório (absorve principles.md)
+
+- **Contexto**: teste de reconstrução da jornada no sandbox produziu
+  resultado estruturalmente correto mas esteticamente ruim
+  (componentes genéricos/feios). Diagnóstico: o harness alimentava os
+  builders com estrutura (tokens, standards, wireframe) mas nenhum
+  documento de identidade visual. Avaliou-se usar o Google Stitch para
+  gerar um design.md a partir de prints; descartado como pipeline —
+  inferir valores de imagem quando o Figma legado dá os valores exatos
+  via MCP seria downgrade de fidelidade e adicionaria passo manual
+  externo não versionado.
+- **Decisão**: criar `design-system/design.md` por projeto (formato
+  inspirado no Stitch: identidade/tom, tema, regras de cor/tipografia/
+  forma/espaçamento, anatomia dos componentes-chave, Do/Don'ts e telas
+  canônicas), gerado internamente pelo onboarding — valores numéricos
+  sempre da fonte autoral, seções perceptuais descritas sobre as telas
+  canônicas selecionadas pelo scanner. Absorve e substitui o
+  `principles.md`. Consumo obrigatório por interpreter,
+  preflight-planner, builder, preflight-builder e validator, com regra
+  de precedência: token exato > design.md > julgamento do modelo.
+- **Motivo**: dar subsídio estético concreto e verificável (Do/Don'ts
+  checáveis em screenshot + referência canônica na delegação) é o que
+  impede o modelo de "inventar" estética genérica.
+- **Restrição de reversão**: nenhuma técnica; se o formato se provar
+  insuficiente após o teste de aceitação (regerar a jornada feia do
+  sandbox com design.md preenchido e comparar), evoluir o template em
+  vez de abandonar — registrar aqui.
+- **Aprovado por**: Angelo Rosa (sessão de 2026-07-11).

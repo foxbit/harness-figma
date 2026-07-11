@@ -79,7 +79,7 @@ novo (ou, raramente, numa re-varredura se o legado mudou muito).
 |---|---|---|---|
 | `onboard-scanner` | 1º — legado nunca mapeado | Varre o arquivo Legado em duas passadas (visual barata → estrutural cirúrgica) e produz o inventário bruto | Julgar, decidir, escrever no Figma |
 | `onboard-analyst` | 2º — inventário pronto | Cruza o inventário, identifica suspeitas de duplicata/inconsistência e formula perguntas objetivas para o humano | Decidir sozinho |
-| `onboard-writer` | 3º — todas as perguntas respondidas | Gera `design-system/tokens/*.md` e `components/*.md` (`Status: em revisão`) + `migration-backlog.md` | Escrever no Figma; rodar com perguntas pendentes |
+| `onboard-writer` | 3º — todas as perguntas respondidas | Gera `design-system/tokens/*.md`, `components/*.md` (`Status: em revisão`), `design.md` (identidade visual) + `migration-backlog.md` | Escrever no Figma; rodar com perguntas pendentes |
 
 Entre o analyst e o writer existe uma etapa humana obrigatória: a
 negociação das perguntas, uma por vez, registrada em
@@ -113,7 +113,7 @@ forma controlada.
 |---|---|---|---|
 | `interpreter` | Início de toda jornada/tela nova | Lê wireframe + user story + design system e propõe o plano, classificando cada elemento (reuso/variante/novo/migrar) com candidatos descartados visíveis | Escrever no Figma; decidir sozinho em ambiguidade |
 | `builder` | Plano aprovado, uma invocação por tela | Executa exatamente o plano via MCP; recebe o `journey-state.md` atualizado para manter coerência entre telas | Reinterpretar o plano; continuar após falha parcial; escrever em arquivos do harness |
-| `validator` | TODAS as telas da jornada prontas | Compara o resultado contra a história do usuário, o wireframe e a coerência entre telas; gera `validation-report.md` (usa Opus — julgamento semântico fino) | Corrigir ou modificar qualquer coisa |
+| `validator` | TODAS as telas da jornada prontas | Compara o resultado contra a história do usuário, o wireframe, a coerência entre telas e a identidade visual (`design.md`); gera `validation-report.md` (usa Opus — julgamento semântico fino) | Corrigir ou modificar qualquer coisa |
 | `documenter` | Jornada aprovada pelo validator + humano | Promove componentes `_draft/` → oficial e frames aprovados → página "Telas Atuais"; registra tokens novos | Documentar/promover antes da validação |
 | `auditor` | Início de cada sessão de trabalho (ou sob suspeita) | Confere consistência técnica do arquivo de Produção contra o `design-system/` documentado: hardcoded, nomenclatura, duplicatas, drift de token | Corrigir automaticamente |
 
@@ -273,8 +273,9 @@ Preencha, nesta ordem:
   → respostas viram onboarding-decisions.md
 
 "Use o onboard-writer"
-  → gera design-system/tokens/*.md e components/*.md
-    (Status: em revisão) + migration-backlog.md
+  → gera design-system/tokens/*.md, components/*.md
+    (Status: em revisão), design.md (identidade visual do projeto)
+    + migration-backlog.md
 ```
 
 Detalhes: `onboarding/ONBOARDING.md`

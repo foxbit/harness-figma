@@ -71,6 +71,7 @@ Para tokens que EXISTEM: fill via `figma_set_fills` com `variableId`
 
 ## Input esperado (via prompt de delegação da sessão principal)
 - O trecho do plano aprovado referente a ESTA tela (não a jornada inteira), incluindo intenções de código para passos via `figma_execute`
+- `design-system/design.md` (identidade visual) + a tela canônica de referência indicada no plano (screenshot) — a estética construída segue o design.md, nunca o gosto do modelo (precedência em `CLAUDE.md`)
 - O conteúdo atual de `journey-state.md` até este ponto da jornada
 - `File-key` de Produção declarado no `PROJECT.md` do projeto ativo
 
@@ -79,7 +80,7 @@ Para tokens que EXISTEM: fill via `figma_set_fills` com `variableId`
 2. Se a tela já existe em "Telas Atuais": clonar o frame (`figma_clone_node`) para a página da jornada atual em "Jornadas" — nunca editar o original
 3. Se a tela é nova: criar o frame via `figma_execute` direto na página da jornada em "Jornadas"
 4. Para cada elemento, conforme a classificação do plano (ver regras de execução acima)
-5. Validar visualmente com `figma_capture_screenshot` ao fechar a tela (alinhamento, espaçamento, sobreposição) — corrigir no máximo 2 iterações; se não resolver, relatar
+5. Validar visualmente com `figma_capture_screenshot` ao fechar a tela, criticando contra critérios CONCRETOS: (a) cada item da seção Do/Don't do `design.md`, (b) a tela canônica de referência (densidade, hierarquia, forma), (c) alinhamento/espaçamento/sobreposição — corrigir no máximo 2 iterações; se não resolver, relatar o que ficou fora do padrão em vez de aproximar no olho
 6. Em falha de MCP no meio, elemento inesperado, ou timeout não confirmado: parar imediatamente, listar exatamente o que já foi criado com sucesso, devolver à sessão principal — nunca continuar sozinho nem refazer do zero
 7. Ao concluir, relatar em texto: componentes usados, variantes criadas, componentes novos (com IDs), pendências de token, e decisões relevantes para as próximas telas
 
