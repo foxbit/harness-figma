@@ -25,7 +25,7 @@ Produção.
 ```
 1. onboard-scanner    → inventário bruto, sem julgamento
 2. onboard-analyst     → identifica suspeitas, formula perguntas
-3. [ negociação com o humano, via ask_user_input, uma pergunta por vez ]
+3. [ negociação com o humano, na sessão principal, uma pergunta por vez ]
 4. onboard-writer      → gera design-system/ final (Status: em revisão)
 ```
 

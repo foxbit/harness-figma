@@ -3,7 +3,8 @@
 projects/[nome-real-do-cliente] e preencha os campos abaixo. Este
 arquivo é o ponto de entrada de qualquer sessão de trabalho neste
 projeto — builder, preflight-builder e os agentes de leitura confirmam
-os file-keys aqui antes de qualquer operação.
+o fileName declarado aqui (via get_metadata) antes de qualquer
+operação; o MCP conectado não expõe file-key.
 -->
 
 # Projeto: [Nome do Cliente]

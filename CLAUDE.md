@@ -124,6 +124,13 @@ O arquivo de Produção de cada cliente segue esta estrutura de páginas
 (criada pelo preflight ao gerar o arquivo novo):
 
 ```
+Foundations           ← tokens/variáveis e estilos base
+Components            ← componentes oficiais do design system — é
+                          AQUI que o preflight-builder reconstrói
+                          componentes migrados do legado
+Patterns              ← composições recorrentes de componentes
+Docs                  ← documentação viva dentro do próprio Figma
+Archive               ← componentes deprecated/aposentados
 🟢 Telas Atuais       ← SEMPRE a versão vigente de cada tela, uma
                           página por tela, nome fixo (não muda por
                           história/jornada). É a fonte da verdade de
@@ -272,6 +279,26 @@ do projeto ativo antes de encerrar a sessão.
 
 ---
 
+## Checagem de integridade do harness (início de sessão)
+
+Antes de aceitar tarefas numa sessão nova, confirmar que o motor do
+harness está íntegro nesta máquina:
+
+1. `.claude/agents/` contém os 10 arquivos de agente (interpreter,
+   builder, documenter, auditor, validator, onboard-scanner,
+   onboard-analyst, onboard-writer, preflight-planner,
+   preflight-builder)
+2. `.mcp.json` existe na raiz e o servidor `figma-mcp-go` aparece como
+   conectado
+
+Motivação real: numa migração de máquina (Linux → Windows), a cópia do
+projeto perdeu silenciosamente todos os arquivos ocultos — incluindo os
+10 agentes — e isso só seria percebido ao tentar invocar um agente. Se
+algo estiver faltando, PARAR e recuperar do repositório git antes de
+qualquer trabalho.
+
+---
+
 ## Sincronização com o Figma real
 
 No início de cada sessão de trabalho em um projeto, rodar uma checagem
@@ -300,7 +327,7 @@ documentados (não apagar) para não quebrar referências em telas antigas.
 
 ---
 
-## Conexão MCP com o Figma (ambiente Linux)
+## Conexão MCP com o Figma
 
 Este harness usa o servidor MCP `figma-mcp-go`
 (https://github.com/vkhanhqui/figma-mcp-go), registrado em `.mcp.json`
@@ -310,13 +337,14 @@ setup: ver `README.md`.
 
 Ponto crítico de arquitetura: TODA operação neste servidor — leitura e
 escrita — depende do plugin "figma-mcp-go" rodando dentro do Figma
-Desktop app aberto no arquivo-alvo, que não tem build oficial para
-Linux (VM Windows, Wine, ou máquina física ocasional — ver `README.md`
-para as opções de contorno). Diferente de uma conexão baseada em token
-de API, não existe modo remoto/read-only que dispense o Desktop: todos
-os 10 agentes, incluindo os somente-leitura (`interpreter`, `auditor`,
-`validator`, `onboard-scanner`, `preflight-planner`), precisam do
-plugin ativo no arquivo correto para funcionar.
+Desktop app aberto no arquivo-alvo. Diferente de uma conexão baseada em
+token de API, não existe modo remoto/read-only que dispense o Desktop:
+todos os 10 agentes, incluindo os somente-leitura (`interpreter`,
+`auditor`, `validator`, `onboard-scanner`, `preflight-planner`),
+precisam do plugin ativo no arquivo correto para funcionar. O Figma
+Desktop tem build oficial para Windows e macOS (ambiente atual:
+Windows, roda nativo); em Linux não há build oficial — ver `README.md`
+para as opções de contorno, se for o caso.
 
 **Dev Mode bloqueia toda escrita.** Se qualquer tool de escrita
 retornar erro do tipo "Can't call X in read-only mode", a causa mais

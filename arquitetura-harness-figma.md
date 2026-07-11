@@ -35,7 +35,7 @@ qualquer cliente** do que é **específico de cada projeto**.
 ```
 figma-harness/
 ├── CLAUDE.md          ← motor: regras universais de processo
-├── .claude/agents/     ← motor: os 5 subagentes especializados
+├── .claude/agents/     ← motor: os 10 subagentes especializados
 ├── skills/             ← motor: procedimentos reutilizáveis
 └── projects/
     └── cliente-x/       ← conteúdo: design system, memória, jornadas
@@ -63,7 +63,9 @@ Se o mesmo agente decide e executa na mesma respiração, não existe
 ponto de checagem no meio — um erro de interpretação vira
 automaticamente um erro de execução, sem chance de você revisar antes.
 
-Por isso o harness usa 5 agentes com escopo de acesso restrito:
+Por isso o harness usa agentes com escopo de acesso restrito — os
+cinco de produção abaixo, mais os cinco de onboarding/preflight
+descritos no adendo ao final deste documento:
 
 | Agente | Decide ou executa? | Acesso |
 |---|---|---|
@@ -107,7 +109,8 @@ explica o objetivo por trás dela.
 ┌───────────────┐
 │  interpreter    │  Lê os dois insumos + o design-system atual.
 │                 │  Para cada elemento de cada tela, decide:
-│                 │  REUSO DIRETO / NOVA VARIANTE / COMPONENTE NOVO
+│                 │  REUSO DIRETO / NOVA VARIANTE / COMPONENTE
+│                 │  NOVO / MIGRAR DO LEGADO (dispara preflight)
 └───────┬─────────┘
         │ plano estruturado
         ▼
@@ -174,7 +177,7 @@ correspondência contra os componentes já documentados:
 3. **Variante coberta** — a diferença encontrada (um estado, um
    conteúdo diferente) já existe como variante documentada, ou é nova?
 
-O resultado dessa avaliação sempre cai em uma de três categorias, e o
+O resultado dessa avaliação sempre cai em uma de quatro categorias, e o
 `interpreter` é obrigado a listar quais componentes existentes foram
 considerados e por que foram descartados — essa lista fica visível no
 plano, para você aprovar ou corrigir antes de qualquer construção.
@@ -183,6 +186,9 @@ plano, para você aprovar ou corrigir antes de qualquer construção.
 REUSO DIRETO         → usa o componente como está
 NOVA VARIANTE         → mesmo componente, adiciona uma variante nova
 COMPONENTE NOVO       → nenhuma correspondência real encontrada
+MIGRAR DO LEGADO      → existe no Figma legado, mas ainda não no
+                         sistema novo — dispara preflight ANTES da
+                         construção da tela (ver adendo)
 ```
 
 Essa disciplina só funciona porque existe um **template fixo de
@@ -270,17 +276,24 @@ Como a conta Figma é corporativa única, com os projetos de cada cliente
 organizados internamente dentro dela, o isolamento entre clientes **não
 é feito por credencial separada** — é feito por configuração:
 
-- Um único token de API vive no `.env` global
+- O MCP conectado (`figma-mcp-go`) não usa token de API — opera via
+  plugin dentro do Figma Desktop, sobre o arquivo que estiver aberto —
+  e não expõe `file-key`, só `fileName` (o nome de exibição do arquivo)
 - Cada projeto tem um `PROJECT.md` declarando explicitamente o
-  `file-key` do Figma daquele cliente
-- Antes de qualquer operação de escrita, o `builder` confirma que o
-  destino corresponde ao `file-key` declarado — se não corresponder,
-  para e alerta, nunca prossegue
+  `fileName` exato dos dois arquivos daquele cliente (Legado e
+  Produção)
+- Antes de qualquer operação de escrita, o `builder` confirma (via
+  `get_metadata`) que o `fileName` do arquivo ativo corresponde ao de
+  Produção declarado — se não corresponder, para e alerta, nunca
+  prossegue
 
 Isso significa que a proteção contra "escrever no projeto errado" é uma
 regra de processo (verificação obrigatória antes de escrever), não uma
-barreira técnica de permissão — o que é suficiente dado que há um único
-token, mas exige disciplina de sempre declarar o `PROJECT.md` corretamente
+barreira técnica de permissão — e como `fileName` é um nome de exibição
+editável, não um identificador criptográfico, a garantia real depende
+do humano ter aberto o arquivo certo no Figma Desktop antes de invocar
+um agente de escrita (ver `CLAUDE.md`, seção "Regra de segurança").
+Isso exige disciplina de sempre declarar o `PROJECT.md` corretamente
 antes de operar em um cliente novo.
 
 Já `memory/` (decisões, aprendizados, changelog) é sempre isolada por
@@ -401,17 +414,22 @@ componente, não na jornada.
 
 Componente/instância do Figma existe para elementos que se repetem
 (Button, Card) — não para telas inteiras, que são por definição únicas.
-Telas são sempre frames duplicados. O arquivo de Produção tem duas
-páginas fixas: `Telas Atuais` (fonte de verdade do estado vigente de
-cada tela) e `Jornadas` (histórico cronológico de trabalho, uma página
-por demanda — o modelo que já era usado antes de existir este harness).
+Telas são sempre frames duplicados. O arquivo de Produção tem, além
+das páginas de design system (Foundations / Components / Patterns /
+Docs / Archive — ver `CLAUDE.md`), duas páginas fixas de telas:
+`Telas Atuais` (fonte de verdade do estado vigente de cada tela) e
+`Jornadas` (histórico cronológico de trabalho, uma página por demanda
+— o modelo que já era usado antes de existir este harness).
 
-### A limitação real do Linux
+### A dependência real do Figma Desktop
 
-O harness usa `figma-console-mcp` em vez do MCP oficial do Figma. Isso
-resolve leitura completamente (modo Remote SSE, sem nenhuma dependência
-de app desktop) — cobre `interpreter`, `auditor`, `validator` e os
-agentes de onboarding. Mas **nenhum MCP disponível hoje remove a
-exigência do Figma Desktop app para escrita** — que não tem build
-oficial para Linux. Por isso `builder` e `preflight-builder` dependem
-de uma VM Windows, Wine, ou acesso ocasional a uma máquina Mac/Windows.
+O harness usa `figma-mcp-go` em vez do MCP oficial do Figma. Esse
+servidor opera inteiramente através de um plugin rodando dentro do
+Figma Desktop, aberto no arquivo-alvo — **leitura e escrita
+igualmente**: não existe modo remoto/read-only que dispense o app
+(hipótese avaliada e descartada após teste na prática). Todos os 10
+agentes, incluindo os somente-leitura, precisam do plugin ativo no
+arquivo correto. O Figma Desktop tem build oficial para Windows e
+macOS (o ambiente atual é Windows, onde roda nativo); em Linux não há
+build oficial — nesse caso, VM Windows, Wine ou máquina física
+ocasional (ver `README.md`).

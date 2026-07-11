@@ -15,11 +15,15 @@ processo completo e o formato de output esperado.
 
 ## Resumo do procedimento
 1. Ler user-story.md + todas as imagens de wireframe/ em ordem
-2. Para cada elemento de cada tela, classificar como REUSO DIRETO / NOVA
-   VARIANTE / COMPONENTE NOVO contra design-system/components/*.md
-   (nunca _draft/)
+2. Para cada elemento de cada tela, classificar como REUSO DIRETO /
+   NOVA VARIANTE / COMPONENTE NOVO / MIGRAR DO LEGADO contra
+   design-system/components/*.md (nunca _draft/) E contra o que já foi
+   documentado do legado (onboarding/preflight anteriores — nunca uma
+   nova varredura ad-hoc)
 3. Documentar candidatos descartados e motivo para cada classificação
 4. Apontar elementos recorrentes entre telas da mesma jornada
-5. Produzir plano estruturado para aprovação humana
+5. Produzir plano estruturado para aprovação humana — se houver itens
+   MIGRAR DO LEGADO, destacá-los no topo: eles exigem preflight ANTES
+   do builder construir a tela
 
 Detalhes completos: `.claude/agents/interpreter.md`
