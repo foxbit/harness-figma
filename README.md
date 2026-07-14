@@ -1,377 +1,356 @@
 # Figma Design Harness — Claude Code
 
-Harness de **design determinístico** para Figma: um processo explícito,
-auditável e repetível para construir telas e design systems no Figma
-usando Claude Code + subagentes especializados, conectados ao Figma via
-MCP. Nada é construído sem um plano aprovado por humano; nenhuma decisão
-de design fica implícita.
+A **deterministic design** harness for Figma: an explicit, auditable, and repeatable
+process for building screens and design systems in Figma using Claude Code + specialized
+subagents, connected to Figma via MCP. Nothing is built without a human-approved plan;
+no design decision is left implicit.
 
 ---
 
-## O que este projeto é (e o problema que resolve)
+## What this project is (and the problem it solves)
 
-Design systems reais, com o tempo, acumulam inconsistência: componentes
-duplicados, nomenclatura solta, tokens usados de forma diferente em
-lugares parecidos. Quando se tenta automatizar a criação de telas com
-IA em cima de uma base assim, dois riscos aparecem:
+Real-world design systems accumulate inconsistency over time: duplicated components,
+loose naming conventions, tokens used differently in similar places. When you try to
+automate screen creation with AI on top of such a foundation, two risks emerge:
 
-1. **Alucinação de componente** — o modelo "acha" que um elemento é
-   parecido o suficiente com outro e o reusa errado, ou cria um
-   componente novo quando já existia um equivalente.
-2. **Perda de coerência entre telas** — numa jornada de várias telas
-   conectadas, cada tela pode resolver o mesmo tipo de elemento de um
-   jeito diferente, porque não há memória entre as construções.
+1. **Component hallucination** — the model "thinks" an element is similar enough to
+   another and reuses it incorrectly, or creates a new component when an equivalent
+   already existed.
+2. **Loss of coherence across screens** — in a multi-screen journey, each screen may
+   solve the same type of element differently because there is no memory between builds.
 
-Este harness resolve isso com quatro princípios:
+This harness addresses this with four principles:
 
-- **Separação decisão vs. execução** — quem decide o que construir
-  (agentes de planejamento, só leitura) nunca é quem constrói (agentes
-  de execução, escrita no Figma). Entre um e outro, sempre há um ponto
-  de aprovação humana.
-- **Classificação obrigatória antes de construir** — todo elemento de
-  wireframe é classificado como REUSO DIRETO / NOVA VARIANTE /
-  COMPONENTE NOVO / MIGRAR DO LEGADO, com os candidatos descartados
-  listados no plano. É isso que impede duplicação silenciosa.
-- **Legado intocável** — cada cliente tem dois arquivos Figma: o
-  **Legado** (antigo, bagunçado, somente leitura, usado como
-  referência) e o de **Produção** (novo, limpo, único destino de
-  escrita). Nenhum agente escreve no Legado, nunca.
-- **Memória em arquivos versionados** — decisões, aprendizados e o
-  estado do design system vivem em `.md` no repositório, não na
-  "lembrança" de uma conversa. Cada correção de hoje vira regra que
-  evita o mesmo erro amanhã.
+- **Separation of decision vs. execution** — whoever decides what to build (planning
+  agents, read-only) is never the one who builds it (execution agents, write to Figma).
+  Between the two, there is always a human approval checkpoint.
+- **Mandatory classification before building** — every wireframe element is classified
+  as DIRECT REUSE / NEW VARIANT / NEW COMPONENT / MIGRATE FROM LEGACY, with discarded
+  candidates listed in the plan. This is what prevents silent duplication.
+- **Immutable legacy** — each client has two Figma files: the **Legacy** (old, messy,
+  read-only, used as reference) and the **Production** file (new, clean, the only
+  write destination). No agent ever writes to the Legacy file.
+- **Memory in versioned files** — decisions, learnings, and design system state live
+  in `.md` files in the repository, not in the "memory" of a conversation. Every
+  correction today becomes a rule that prevents the same mistake tomorrow.
 
-Leia `arquitetura-harness-figma.md` para o raciocínio completo por trás
-de cada decisão de desenho. Este README é o guia operacional; as regras
-universais de processo estão em `CLAUDE.md`.
+Read `arquitetura-harness-figma.md` for the complete reasoning behind each design
+decision. This README is the operational guide; the universal process rules are in
+`CLAUDE.md`.
 
 ---
 
-## Casos de uso — "estou nesta situação, uso o quê?"
+## Use cases — "I'm in this situation, which module do I use?"
 
-| Situação | Módulo / caminho |
+| Situation | Module / path |
 |---|---|
-| Cliente novo chegou com um Figma legado bagunçado, nunca mapeado | **Onboarding** (Fluxo 1) — uma vez por cliente |
-| Vou desenhar uma jornada/tela nova a partir de wireframe + história do usuário | **Produção** (Fluxo 3) — o ciclo do dia a dia |
-| A tela nova precisa de um componente que só existe no arquivo legado | **Preflight** (Fluxo 2) — disparado pelo plano do interpreter (`MIGRAR DO LEGADO`), antes da construção |
-| Quero adiantar a migração de componentes prioritários do legado, sem esperar demanda | **Preflight** manual, a partir do `migration-backlog.md` |
-| Uma jornada nova envolve reconstruir uma tela que já existe no legado (ex: a Home) | **Produção** com print da tela legada como wireframe — ver `migration/MIGRATION.md` |
-| Suspeito que alguém do time do cliente mexeu no Figma por fora do harness | **`auditor`** — checagem de sincronização (recomendado no início de toda sessão) |
-| Atendo vários clientes na mesma conta Figma corporativa | Um diretório por cliente em `projects/`, com `PROJECT.md` declarando os arquivos — o isolamento é por configuração |
+| New client arrived with a messy legacy Figma, never mapped | **Onboarding** (Flow 1) — once per client |
+| I'm designing a new journey/screen from a wireframe + user story | **Production** (Flow 3) — the day-to-day cycle |
+| The new screen needs a component that only exists in the legacy file | **Preflight** (Flow 2) — triggered by the interpreter plan (`MIGRATE FROM LEGACY`), before building |
+| I want to proactively migrate priority legacy components without waiting for demand | Manual **Preflight**, from `migration-backlog.md` |
+| A new journey involves rebuilding a screen that already exists in the legacy (e.g., the Home screen) | **Production** with a screenshot of the legacy screen as wireframe — see `migration/MIGRATION.md` |
+| I suspect someone on the client's team edited Figma outside the harness | **`auditor`** — sync check (recommended at the start of every session) |
+| I serve multiple clients on the same corporate Figma account | One directory per client in `projects/`, with `PROJECT.md` declaring the files — isolation is by configuration |
 
 ---
 
-## Os três módulos e seus 10 agentes
+## The three modules and their 10 agents
 
-O harness é dividido em três módulos (escopos), com cadências e riscos
-diferentes. Cada módulo tem seus próprios agentes, e todos seguem a
-mesma regra: **nenhum agente aciona outro** — a coordenação passa sempre
-pela sessão principal (você + Claude na conversa raiz), que decide
-quando delegar e quando pedir aprovação humana.
+The harness is divided into three modules (scopes) with different cadences and risk
+profiles. Each module has its own agents, and all follow the same rule: **no agent
+triggers another** — coordination always passes through the main session (you + Claude
+in the root conversation), which decides when to delegate and when to request human
+approval.
 
-### Módulo 1 — Onboarding (uma vez por cliente · só leitura no Figma)
+### Module 1 — Onboarding (once per client · read-only in Figma)
 
-Mapeia um Figma legado desconhecido e o transforma em documentação que
-os outros módulos conseguem consultar. Roda no início de cada cliente
-novo (ou, raramente, numa re-varredura se o legado mudou muito).
+Maps an unknown legacy Figma file and transforms it into documentation that the other
+modules can reference. Runs at the start of each new client (or, rarely, on a re-scan
+if the legacy has changed significantly).
 
-| Agente | Quando entra | O que faz | Nunca faz |
+| Agent | When it runs | What it does | Never does |
 |---|---|---|---|
-| `onboard-scanner` | 1º — legado nunca mapeado | Varre o arquivo Legado em duas passadas (visual barata → estrutural cirúrgica) e produz o inventário bruto | Julgar, decidir, escrever no Figma |
-| `onboard-analyst` | 2º — inventário pronto | Cruza o inventário, identifica suspeitas de duplicata/inconsistência e formula perguntas objetivas para o humano | Decidir sozinho |
-| `onboard-writer` | 3º — todas as perguntas respondidas | Gera `design-system/tokens/*.md`, `components/*.md` (`Status: em revisão`), `design.md` (identidade visual) + `migration-backlog.md` | Escrever no Figma; rodar com perguntas pendentes |
+| `onboard-scanner` | 1st — legacy never mapped | Scans the Legacy file in two passes (cheap visual → surgical structural) and produces the raw inventory | Judge, decide, write to Figma |
+| `onboard-analyst` | 2nd — inventory ready | Cross-references the inventory, identifies suspected duplicates/inconsistencies, and formulates objective questions for the human | Decide on its own |
+| `onboard-writer` | 3rd — all questions answered | Generates `design-system/tokens/*.md`, `components/*.md` (`Status: under review`), `design.md` (visual identity) + `migration-backlog.md` | Write to Figma; run with pending questions |
 
-Entre o analyst e o writer existe uma etapa humana obrigatória: a
-negociação das perguntas, uma por vez, registrada em
-`onboarding-decisions.md`.
+Between the analyst and the writer there is a mandatory human step: negotiating the
+questions one at a time, recorded in `onboarding-decisions.md`.
 
-### Módulo 2 — Preflight (sob demanda, incremental · escreve no arquivo de Produção)
+### Module 2 — Preflight (on demand, incremental · writes to the Production file)
 
-Migra componentes do legado para o arquivo de Produção, **um por vez,
-quando uma demanda real precisa deles** — nunca em lote (big-bang). É
-também o módulo em que o arquivo de Produção nasce, na primeira
-execução de um cliente (a criação do ARQUIVO em si é manual — o agente
-cria a estrutura de páginas). "Migrar" aqui significa **reconstruir do zero** seguindo
-`COMPONENT_STANDARDS.md`, usando o legado só como referência visual —
-nunca copiar a estrutura problemática.
+Migrates components from the legacy to the Production file, **one at a time, when a
+real demand requires them** — never in batch (big-bang). It is also the module where
+the Production file is created on the first run for a client (the FILE itself is created
+manually — the agent creates the page structure). "Migrate" here means **rebuilding
+from scratch** following `COMPONENT_STANDARDS.md`, using the legacy only as a visual
+reference — never copying the problematic structure.
 
-| Agente | Quando entra | O que faz | Nunca faz |
+| Agent | When it runs | What it does | Never does |
 |---|---|---|---|
-| `preflight-planner` | Elemento marcado `MIGRAR DO LEGADO`, ou priorização manual do backlog | Lê o componente no Legado e propõe a reconstrução, destacando riscos de drift visual para a aprovação | Reconstruir, escrever no Figma |
-| `preflight-builder` | Plano de reconstrução aprovado | Reconstrói no arquivo de Produção (cria a estrutura de páginas na 1ª vez do cliente; único agente que cria variáveis/tokens) | Escrever no Legado; decidir migrar algo fora do aprovado |
+| `preflight-planner` | Element marked `MIGRATE FROM LEGACY`, or manual backlog prioritization | Reads the component in the Legacy and proposes the reconstruction, highlighting visual drift risks for approval | Reconstruct, write to Figma |
+| `preflight-builder` | Reconstruction plan approved | Rebuilds in the Production file (creates the page structure on the client's 1st run; the only agent that creates variables/tokens) | Write to Legacy; decide to migrate something outside what was approved |
 
-Após a reconstrução, o `documenter` (do módulo de Produção) promove o
-componente: `Status: em revisão` → `Status: ativo`.
+After reconstruction, the `documenter` (from the Production module) promotes the
+component: `Status: under review` → `Status: active`.
 
-### Módulo 3 — Produção (dia a dia · escreve no arquivo de Produção)
+### Module 3 — Production (day to day · writes to the Production file)
 
-O ciclo recorrente: transformar wireframe + história do usuário em
-telas construídas no Figma, com componentes reusados ou criados de
-forma controlada.
+The recurring cycle: transforming wireframe + user story into screens built in Figma,
+with components reused or created in a controlled way.
 
-| Agente | Quando entra | O que faz | Nunca faz |
+| Agent | When it runs | What it does | Never does |
 |---|---|---|---|
-| `interpreter` | Início de toda jornada/tela nova | Lê wireframe + user story + design system e propõe o plano, classificando cada elemento (reuso/variante/novo/migrar) com candidatos descartados visíveis | Escrever no Figma; decidir sozinho em ambiguidade |
-| `builder` | Plano aprovado, uma invocação por tela | Executa exatamente o plano via MCP; recebe o `journey-state.md` atualizado para manter coerência entre telas | Reinterpretar o plano; continuar após falha parcial; escrever em arquivos do harness |
-| `validator` | TODAS as telas da jornada prontas | Compara o resultado contra a história do usuário, o wireframe, a coerência entre telas e a identidade visual (`design.md`); gera `validation-report.md` (usa Opus — julgamento semântico fino) | Corrigir ou modificar qualquer coisa |
-| `documenter` | Jornada aprovada pelo validator + humano | Promove componentes `_draft/` → oficial e frames aprovados → página "Telas Atuais"; registra tokens novos | Documentar/promover antes da validação |
-| `auditor` | Início de cada sessão de trabalho (ou sob suspeita) | Confere consistência técnica do arquivo de Produção contra o `design-system/` documentado: hardcoded, nomenclatura, duplicatas, drift de token | Corrigir automaticamente |
+| `interpreter` | Start of every new journey/screen | Reads wireframe + user story + design system and proposes the plan, classifying each element (reuse/variant/new/migrate) with discarded candidates visible | Write to Figma; decide alone in ambiguity |
+| `builder` | Plan approved, one invocation per screen | Executes the plan exactly via MCP; receives the updated `journey-state.md` to maintain coherence across screens | Reinterpret the plan; continue after partial failure; write to harness files |
+| `validator` | ALL screens in the journey are ready | Compares the result against the user story, the wireframe, cross-screen coherence, and the visual identity (`design.md`); generates `validation-report.md` (uses Opus — fine semantic judgment) | Correct or modify anything |
+| `documenter` | Journey approved by validator + human | Promotes `_draft/` components → official and approved frames → "Current Screens" page; registers new tokens | Document/promote before validation |
+| `auditor` | Start of each work session (or under suspicion) | Checks technical consistency of the Production file against the documented `design-system/`: hardcoded values, naming, duplicates, token drift | Auto-correct |
 
-A ordem do fluxo de produção é fixa e existe por um motivo: o
-`documenter` vem por último porque oficializar um componente antes da
-validação semântica propagaria um erro de interpretação para todas as
-jornadas futuras.
+The production flow order is fixed and exists for a reason: the `documenter` comes last
+because formalizing a component before semantic validation would propagate an
+interpretation error to all future journeys.
 
 ```
-interpreter → [aprovação humana] → (preflight, se necessário) →
-builder (por tela) → validator (jornada completa) →
-[aprovação humana] → documenter
+interpreter → [human approval] → (preflight, if needed) →
+builder (per screen) → validator (full journey) →
+[human approval] → documenter
 ```
 
 ---
 
-## Estrutura do repositório
+## Repository structure
 
 ```
 figma-harness/
-├── CLAUDE.md                  # regras universais — leia primeiro
-├── arquitetura-harness-figma.md # o "porquê" de cada decisão de desenho
-├── onboarding/ONBOARDING.md    # processo do módulo de onboarding
-├── preflight/PREFLIGHT.md      # processo do módulo de preflight
-├── migration/MIGRATION.md      # variação leve: migrar tela legada
-├── mcp-figma/plugin/            # LEGADO: plugin do figma-mcp-go
-│   │                              (MCP anterior — remover após a 1ª
-│   │                              jornada real no servidor novo)
-├── .claude/agents/             # os 10 subagentes
+├── CLAUDE.md                   # universal rules — read first
+├── arquitetura-harness-figma.md # the "why" behind each design decision
+├── onboarding/ONBOARDING.md    # onboarding module process
+├── preflight/PREFLIGHT.md      # preflight module process
+├── migration/MIGRATION.md      # light variation: migrate a legacy screen
+├── mcp-figma/plugin/           # LEGACY: figma-mcp-go plugin
+│   │                           (previous MCP — remove after 1st
+│   │                            real journey on the new server)
+├── .claude/agents/             # the 10 subagents
 │   ├── interpreter.md / builder.md / documenter.md / auditor.md /
-│   │   validator.md                            ← produção
+│   │   validator.md                                  → production
 │   ├── onboard-scanner.md / onboard-analyst.md /
-│   │   onboard-writer.md                        ← onboarding
-│   └── preflight-planner.md / preflight-builder.md   ← preflight
-├── skills/                     # procedimentos reutilizáveis
+│   │   onboard-writer.md                             → onboarding
+│   └── preflight-planner.md / preflight-builder.md   → preflight
+├── skills/                     # reusable procedures
 └── projects/
-    └── [nome-do-cliente]/      # um diretório por cliente/projeto
-        ├── PROJECT.md            # File-key de Legado e de Produção
-        ├── design-system/        # tokens + components documentados
-        ├── memory/               # decisões, aprendizados, changelog
-        └── journeys/             # uma pasta por jornada construída
+    └── [client-name]/          # one directory per client/project
+        ├── PROJECT.md          # Legacy and Production file keys
+        ├── design-system/      # documented tokens + components
+        ├── memory/             # decisions, learnings, changelog
+        └── journeys/           # one folder per built journey
 ```
 
-Tudo que é **motor** (regras, agentes, skills) é compartilhado entre
-clientes; tudo que é **conteúdo** (design system, memória, jornadas)
-fica isolado dentro de `projects/[cliente]/` e nunca vaza para outro
-cliente.
+Everything that is **engine** (rules, agents, skills) is shared across clients;
+everything that is **content** (design system, memory, journeys) is isolated inside
+`projects/[client]/` and never leaks to another client.
 
-Veja `projects/_EXEMPLO_CLIENTE/` como modelo para criar um projeto
-novo, e `projects/_SANDBOX_TESTE/` como fixture já preenchida (smoke
-test dos 10 agentes) para consulta.
+See `projects/_EXAMPLE_CLIENT/` as a template for creating a new project, and
+`projects/_SANDBOX_TEST/` as a pre-filled fixture (10-agent smoke test) for reference.
 
 ---
 
-## Setup inicial (uma vez por máquina/instalação)
+## Initial setup (once per machine/installation)
 
-### 1. Personal Access Token do Figma
+### 1. Figma Personal Access Token
 
-Crie um token em Figma → Settings → Security → Personal access tokens
-(descrição sugerida: `Figma Console MCP`), com os scopes: **File
+Create a token in Figma → Settings → Security → Personal access tokens
+(suggested description: `Figma Console MCP`), with the scopes: **File
 content (Read)**, **File versions (Read)**, **Variables (Read)**,
-**Comments (Read/write)**. O token (`figd_...`) alimenta só a LEITURA
-via REST — a escrita no canvas passa pelo plugin bridge, por isso os
-scopes são de leitura. Copie na hora: não é exibido de novo. O
-`.env.example` segue de referência para outras integrações; **nunca**
-commite `.env` nem o token.
+**Comments (Read/write)**. The token (`figd_...`) only powers **READ**
+via REST — writes on the canvas go through the bridge plugin, which is why
+scopes are read-only. Copy it immediately: it won't be shown again. The
+`.env.example` serves as reference for other integrations; **never** commit
+`.env` or the token.
 
-### 2. Conectar o MCP do Figma — `figma-console-mcp`
+### 2. Connect the Figma MCP — `figma-console-mcp`
 
-Este harness usa https://github.com/southleft/figma-console-mcp
-(substituiu o `figma-mcp-go` em 2026-07-11, após smoke test completo —
-ver `smoke-test-figma-console-mcp.md`). Arquitetura híbrida:
-**leitura via REST** por `fileUrl`/`fileKey`, sem Figma Desktop — é
-assim que o arquivo Legado é lido, sem nunca receber plugin — e
-**escrita via plugin Desktop Bridge** rodando no arquivo-alvo.
+This harness uses https://github.com/southleft/figma-console-mcp
+(replaced `figma-mcp-go` on 2026-07-11, after a complete smoke test —
+see `smoke-test-figma-console-mcp.md`). Hybrid architecture:
+**read via REST** by `fileUrl`/`fileKey`, without Figma Desktop — this is
+how the Legacy file is read, without ever receiving the plugin — and
+**write via Desktop Bridge plugin** running on the target file.
 
 ```bash
 claude mcp add figma-console -s user \
-  -e FIGMA_ACCESS_TOKEN=figd_SEU_TOKEN_AQUI \
+  -e FIGMA_ACCESS_TOKEN=figd_YOUR_TOKEN_HERE \
   -e ENABLE_MCP_APPS=true \
   -- npx -y figma-console-mcp@latest
 ```
 
-> ⚠️ **Escopo `-s user` (ou `-s local`), NUNCA `-s project`** — o
-> registro carrega o token, e `-s project` gravaria em `.mcp.json`,
-> que é versionado. Consequência: cada máquina nova precisa refazer
-> este comando; nada no repositório restaura o registro.
+> ⚡ **Scope `-s user` (or `-s local`), NEVER `-s project`** — the
+> registration carries the token, and `-s project` would write to `.mcp.json`,
+> which is versioned. Consequence: each new machine needs to re-run this
+> command; nothing in the repository restores the registration.
 
-A primeira checagem (`claude mcp list`) pode falhar enquanto o `npx`
-baixa o pacote — com o cache aquecido, mostra
-`figma-console ... ✔ Connected`.
+The first check (`claude mcp list`) may fail while `npx` downloads the
+package — once cached, it shows `figma-console ... ✔ Connected`.
 
-**Plugin Desktop Bridge (obrigatório para ESCRITA; leitura dispensa):**
-1. O servidor materializa o plugin em
-   `~/.figma-console-mcp/plugin/manifest.json` na primeira execução
+**Desktop Bridge Plugin (required for WRITE; read does not require it):**
+1. The server materializes the plugin at
+   `~/.figma-console-mcp/plugin/manifest.json` on the first run
 2. Figma Desktop: **Plugins → Development → Import plugin from
-   manifest** → aponte para esse arquivo
-3. Abra o arquivo de **Produção** e rode o plugin (**Plugins →
-   Development → Figma Desktop Bridge**) — conecta sozinho via
-   WebSocket (portas 9223–9232). Plugins de desenvolvimento precisam
-   ser rodados a cada sessão de trabalho
-4. **NUNCA rode o plugin no arquivo Legado** — é a ausência do bridge
-   que torna escrita no Legado impossível por arquitetura (ver
-   `CLAUDE.md`, regra de segurança)
-5. Figma Desktop: build oficial para Windows (ambiente atual, nativo)
-   e macOS. Em Linux só a escrita exige contorno (VM/Wine) — a leitura
-   via REST funciona em qualquer OS
+   manifest** → point to that file
+3. Open the **Production** file and run the plugin (**Plugins →
+   Development → Figma Desktop Bridge**) — it connects automatically via
+   WebSocket (ports 9223–9232). Development plugins need to be run at
+   the start of each work session
+4. **NEVER run the plugin on the Legacy file** — the absence of the bridge
+   is what makes writing to the Legacy architecturally impossible (see
+   `CLAUDE.md`, security rule)
+5. Figma Desktop: official build for Windows (current environment, native)
+   and macOS. On Linux, only write requires a workaround (VM/Wine) — read
+   via REST works on any OS
 
-**Troubleshooting — "Can't call X in read-only mode":** a aba do Figma
-está em **Dev Mode** (ícone `</>`, atalho `Shift+D`) — a Plugin API
-bloqueia escrita nesse estado, para qualquer plugin. Alterne para
-Design mode.
+**Troubleshooting — "Can't call X in read-only mode":** the Figma tab is in
+**Dev Mode** (icon `</>`, shortcut `Shift+D`) — the Plugin API blocks writes
+in that state, for any plugin. Switch to Design mode.
 
-As capacidades e quirks confirmados do servidor (timeout ≠ falha, sync
-de tokens, leitura de Auto Layout via `figma_execute` etc.) estão em
-`CLAUDE.md`, seção "Conexão MCP com o Figma". Os 10 agentes usam o
-prefixo `mcp__figma-console__*`, migrados com base no smoke test em
-`projects/_SANDBOX_TESTE/`. O que ainda vem com marcações
-`[PREENCHER]`/`[VALIDAR]` é o que é inerentemente por-cliente: o
-`PROJECT.md` de cada projeto novo (copiado de `_EXEMPLO_CLIENTE`) e
-alguns pontos listados em "Fora de escopo" abaixo.
+The confirmed capabilities and quirks of the server (timeout ≠ failure, token
+sync, reading Auto Layout via `figma_execute`, etc.) are in `CLAUDE.md`,
+section "MCP Connection with Figma". The 10 agents use the prefix
+`mcp__figma-console__*`, migrated based on the smoke test in
+`projects/_SANDBOX_TEST/`. What still has `[FILL IN]`/`[VALIDATE]` markers
+is what is inherently per-client: the `PROJECT.md` of each new project (copied
+from `_EXAMPLE_CLIENT`) and some points listed under "Out of scope" below.
 
-> Nota de transição: o servidor anterior (`figma-mcp-go`) permanece
-> registrado em `.mcp.json`, e o plugin dele vendorizado em
-> `mcp-figma/plugin/`, apenas como fallback — nenhum agente o usa
-> mais. Remover ambos quando a primeira jornada real completar no
-> servidor novo.
+> Transition note: the previous server (`figma-mcp-go`) remains registered in
+> `.mcp.json`, and its vendored plugin in `mcp-figma/plugin/`, only as a
+> fallback — no agent uses it anymore. Remove both once the first real journey
+> completes on the new server.
 
-### 3. Criar um novo projeto/cliente
+### 3. Create a new project/client
 
 ```bash
-cp -r projects/_EXEMPLO_CLIENTE projects/nome-do-cliente
+cp -r projects/_EXAMPLE_CLIENT projects/client-name
 ```
 
-Preencha, nesta ordem:
-1. `projects/nome-do-cliente/PROJECT.md` — pelo menos o **File-key**
-   do Legado (basta o link do arquivo — o key está na URL). É por ele
-   que os agentes leem o Legado via REST e que a regra de segurança
-   verifica o alvo de escrita. O bloco de Produção fica vazio até o
-   arquivo ser criado no primeiro preflight (criação do arquivo é
-   manual — o agente cria só a estrutura de páginas)
-2. Rode o onboarding (ver abaixo) antes de qualquer trabalho de
-   produção
+Fill in, in this order:
+1. `projects/client-name/PROJECT.md` — at minimum the **File-key** of the
+   Legacy (just the file link — the key is in the URL). This is what the
+   agents use to read the Legacy via REST and what the security rule uses to
+   verify the write target. The Production block stays empty until the file
+   is created in the first preflight (file creation is manual — the agent
+   only creates the page structure)
+2. Run onboarding (see below) before any production work
 
 ---
 
-## Fluxo 1 — Onboarding (uma vez por cliente)
+## Flow 1 — Onboarding (once per client)
 
 ```
-"Use o onboard-scanner no projeto nome-do-cliente"
-  → gera onboarding-inventory.md
+"Use the onboard-scanner on the client-name project"
+  → generates onboarding-inventory.md
 
-"Use o onboard-analyst"
-  → gera onboarding-questions.md
+"Use the onboard-analyst"
+  → generates onboarding-questions.md
 
-[ responda as perguntas, uma de cada vez ]
-  → respostas viram onboarding-decisions.md
+[ answer the questions, one at a time ]
+  → answers become onboarding-decisions.md
 
-"Use o onboard-writer"
-  → gera design-system/tokens/*.md, components/*.md
-    (Status: em revisão), design.md (identidade visual do projeto)
+"Use the onboard-writer"
+  → generates design-system/tokens/*.md, components/*.md
+    (Status: under review), design.md (project visual identity)
     + migration-backlog.md
 ```
 
-Detalhes: `onboarding/ONBOARDING.md`
+Details: `onboarding/ONBOARDING.md`
 
-## Fluxo 2 — Preflight (sob demanda, incremental)
+## Flow 2 — Preflight (on demand, incremental)
 
-Normalmente disparado automaticamente pelo fluxo de produção (abaixo),
-quando o `interpreter` marca um elemento como `MIGRAR DO LEGADO`. Pode
-também ser rodado manualmente a partir do `migration-backlog.md`:
-
-```
-"Use o preflight-planner para o componente Button/Primary"
-  → propõe plano de reconstrução
-
-[ aprovação humana ]
-
-"Use o preflight-builder com o plano aprovado"
-  → reconstrói no arquivo de Produção (na 1ª vez: você cria o arquivo
-    manualmente e roda o plugin nele; o agente cria as páginas)
-
-"Use o documenter para promover Button/Primary"
-  → Status: em revisão → ativo
-```
-
-Detalhes: `preflight/PREFLIGHT.md`
-
-## Fluxo 3 — Produção (dia a dia)
-
-1. Crie `projects/nome-do-cliente/journeys/nome-da-jornada/`
-2. `user-story.md` com a história do usuário (template incluso)
-3. `wireframe/` com as imagens exportadas do Miro (ou print de tela
-   legada, se for uma migração — ver `migration/MIGRATION.md`)
+Normally triggered automatically by the production flow (below), when the
+`interpreter` marks an element as `MIGRATE FROM LEGACY`. Can also be run
+manually from `migration-backlog.md`:
 
 ```
-"Use o interpreter para a jornada nome-da-jornada"
-  → plano com classificação por elemento: REUSO DIRETO / NOVA
-    VARIANTE / COMPONENTE NOVO / MIGRAR DO LEGADO
+"Use the preflight-planner for the Button/Primary component"
+  → proposes reconstruction plan
 
-[ aprovação humana ]
+[ human approval ]
 
-[ se houver MIGRAR DO LEGADO: rodar Fluxo 2 para esses itens antes
-  de prosseguir ]
+"Use the preflight-builder with the approved plan"
+  → rebuilds in the Production file (on the 1st run: you create the file
+    manually and run the plugin on it; the agent creates the pages)
 
-"Use o builder para construir a tela 1"
-  → repita por tela; builder recebe journey-state.md atualizado a
-    cada nova tela (atualização é responsabilidade da sessão
-    principal, não do builder)
-
-"Use o validator para validar a jornada completa"
-  → gera journeys/nome-da-jornada/validation-report.md
-
-[ aprovação humana ]
-
-"Use o documenter para promover os componentes desta jornada e as
-telas para Telas Atuais"
+"Use the documenter to promote Button/Primary"
+  → Status: under review → active
 ```
 
-Rode o `auditor` periodicamente (recomendado: início de cada sessão de
-trabalho no projeto) para checar sincronização com o arquivo de
-Produção real.
+Details: `preflight/PREFLIGHT.md`
 
-Detalhes: `CLAUDE.md`
+## Flow 3 — Production (day to day)
 
-### Formato de wireframe aceito hoje
+1. Create `projects/client-name/journeys/journey-name/`
+2. `user-story.md` with the user story (template included)
+3. `wireframe/` with images exported from Miro (or a screenshot of a legacy
+   screen, if it's a migration — see `migration/MIGRATION.md`)
 
-PDF ou imagem exportada do Miro (ou de qualquer ferramenta), uma por
-tela, em `wireframe/`. Conexão MCP direta ao Miro foi avaliada e
-adiada conscientemente — ver `CLAUDE.md`, seção "Fora de escopo".
+```
+"Use the interpreter for the journey-name journey"
+  → plan with per-element classification: DIRECT REUSE / NEW
+    VARIANT / NEW COMPONENT / MIGRATE FROM LEGACY
+
+[ human approval ]
+
+[ if MIGRATE FROM LEGACY: run Flow 2 for those items before proceeding ]
+
+"Use the builder to build screen 1"
+  → repeat per screen; builder receives the updated journey-state.md
+    at each new screen (update is the main session's responsibility,
+    not the builder's)
+
+"Use the validator to validate the full journey"
+  → generates journeys/journey-name/validation-report.md
+
+[ human approval ]
+
+"Use the documenter to promote this journey's components and
+screens to Current Screens"
+```
+
+Run the `auditor` periodically (recommended: at the start of each work
+session on the project) to check sync with the real Production file.
+
+Details: `CLAUDE.md`
+
+### Wireframe format accepted today
+
+PDF or image exported from Miro (or any tool), one per screen, in `wireframe/`.
+A direct MCP connection to Miro was evaluated and consciously deferred — see
+`CLAUDE.md`, section "Out of scope".
 
 ---
 
-## Estrutura de páginas do arquivo de Produção
+## Production file page structure
 
 ```
-Foundations / Components / Patterns / Docs / Archive   ← design system
-🟢 Telas Atuais    ← versão vigente de cada tela, sempre
-🗂️ Jornadas         ← histórico, uma página por jornada
+Foundations / Components / Patterns / Docs / Archive  → design system
+🎯 Current Screens   → current version of each screen, always
+🗂️ Journeys          → history, one page per journey
 ```
 
-Os componentes reconstruídos pelo preflight vivem em **Components**.
-Telas são sempre frames duplicados (cópia solta), nunca componente/
-instância — isso é reservado para elementos reais do design system
-(Button, Card etc.). Ver `CLAUDE.md` para a mecânica completa.
+Components rebuilt by preflight live in **Components**.
+Screens are always loose-copy duplicated frames, never a component/instance —
+that is reserved for actual design system elements (Button, Card, etc.). See
+`CLAUDE.md` for the complete mechanism.
 
 ---
 
-## Pontos que ficaram conscientemente fora de escopo (v1)
+## Points consciously left out of scope (v1)
 
-- Rollback automatizado de operações no Figma
-- Múltiplos aprovadores / fluxo de aprovação por cliente
-- Responsividade / breakpoints (campo previsto no template, sem
-  processo ainda)
-- Conexão MCP direta com Miro
-- `[VALIDAR]` Portabilidade automática de assets (ícones, imagens)
-  entre arquivo Legado e arquivo de Produção — confirmar na prática
-  assim que o preflight rodar com um componente que dependa de asset
+- Automated rollback of Figma operations
+- Multiple approvers / per-client approval flow
+- Responsiveness / breakpoints (field provided in the template, no process yet)
+- Direct MCP connection with Miro
+- `[VALIDATE]` Automatic asset portability (icons, images) between the Legacy
+  and Production files — confirm in practice as soon as preflight runs with
+  a component that depends on an asset
 
-Se algum desses virar necessidade real, revisite o raciocínio antes de
-implementar — várias dessas decisões têm trade-offs já discutidos.
+If any of these becomes a real need, revisit the reasoning before implementing
+— several of these decisions have trade-offs already discussed.
